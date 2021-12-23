@@ -15,15 +15,6 @@ OS=`uname -m`;
 MYIP=$(wget -qO- ipv4.icanhazip.com);
 MYIP2="s/xxxxxxxxx/$MYIP/g";
 
-# company name details
-country=MY
-state=MY
-locality=Malaysia
-organization=Personal
-organizationalunit=Personal
-commonname=RangersVPN
-email=rangersvpn@gmail.com
-
 SSH_Port1='22'
 SSH_Port2='225'
 SSH_Banner='https://gakod.com/banner'
@@ -40,6 +31,7 @@ fi
 if [[ ! -e /dev/net/tun ]]; then
 echo "TUN is not available"
 exit 3
+fi
 echo "
 AUTOSCRIPT BY RANGERSVPN
 

@@ -1,30 +1,6 @@
 DISTRO=`awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }'`
 SERVER_IP=`ip -o route get to 8.8.8.8 | sed -n 's/.*src \([0-9.]\+\).*/\1/p'`
 
-# Welcome Message
-echo 'Welcome to WhyTzy96 Script'
-echo 'Script Version: 0.1'
-echo 'Updated on: 07/08/2021'
-
-# Check if root
-if [ "$(id -u)" != "0" ]; then
-   echo "This script must be run as root" 1>&2
-   exit 1
-fi
-
-
-if test -f "/root/.tcat_installed"; then
-	echo 'TunnelCat VPN Software already installed!'
-	exit 1
-fi
-
-if ! [[ $OPENVPN_PORT =~ ^[0-9]+$ || $OHP_PORT =~ ^[0-9]+$ || $PRIVOXY_PORT =~ ^[0-9]+$ || $STUNNEL_PORT =~ ^[0-9]+$ ]]; then
-	echo 'Port is invalid'
-	exit 1
-fi
-
-echo 'Proceeding with the installation of dependencies'
-
 # Install Dependencies
 echo 'Installing Dependencies'
 DEBIAN_FRONTEND=noninteractive apt install -y resolvconf privoxy stunnel unzip iproute2 dns2tcp

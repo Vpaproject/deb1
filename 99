@@ -1,30 +1,9 @@
- #!/bin/bash
-SSH_Banner='https://gakod.com/banner'
-******************************************
-#Requirement
-if [ ! -e /usr/bin/curl ]; then
-    apt-get -y update && apt-get -y upgrade
-	apt-get -y install curl
-fi
-# initialisasi var
-export DEBIAN_FRONTEND=noninteractive
-OS=`uname -m`;
-MYIP=$(curl -4 icanhazip.com)
-if [ $MYIP = "" ]; then
-   MYIP=`ifconfig | grep 'inet addr:' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | cut -d: -f2 | awk '{ print $1}' | head -1`;
-fi
-MYIP2="s/xxxxxxxxx/$MYIP/g";
+#!/bin/bash
 SSH_Port1='22'
 SSH_Port2='225'
-# company name details
-country=MY
-state=MY
-locality=Malaysia
-organization=Personal
-organizationalunit=Personal
-commonname=RangersVPN
-email=rangersvpn@gmail.com
-
+SSH_Banner='https://gakod.com/banner'
+myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | head -n1`;
+myint=`ifconfig | grep -B1 "inet addr:$myip" | head -n1 | awk '{print $1}'`;
 if [ $USER != 'root' ]; then
 echo "Sorry, for run the script please using root user"
 exit 1
@@ -38,21 +17,17 @@ echo "TUN is not available"
 exit 3
 fi
 echo "
-AUTOSCRIPT BY RANGERSVPN
-
-PLEASE CANCEL ALL PACKAGE POPUP
-
-TAKE NOTE !!!"
+AUTOSCRIPT BY @orangkuatsabahanterkini
+AMBIL PERHATIAN !!!"
 clear
-echo "START AUTOSCRIPT"
+echo "MULA SETUP"
 clear
 echo "SET TIMEZONE KUALA LUMPUT GMT +8"
 ln -fs /usr/share/zoneinfo/Asia/Kuala_Lumpur /etc/localtime;
 clear
 echo "
 ENABLE IPV4 AND IPV6
-
-COMPLETE 1%
+SILA TUNGGU SEDANG DI SETUP
 "
 echo ipv4 >> /etc/modules
 echo ipv6 >> /etc/modules
@@ -62,17 +37,23 @@ sed -i 's/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g' /etc
 sysctl -p
 clear
 echo "
-REMOVE SPAM PACKAGE
-
-COMPLETE 10%
+MEMBUANG SPAM PACKAGE
 "
 apt-get -y --purge remove samba*;
 apt-get -y --purge remove apache2*;
 apt-get -y --purge remove sendmail*;
 apt-get -y --purge remove postfix*;
 apt-get -y --purge remove bind*;
-apt-get -y install wget curl
-
+clear
+echo "
+"
+sh -c 'echo "deb http://download.webmin.com/download/repository sarge contrib" > /etc/apt/sources.list.d/webmin.list'
+wget -qO - http://www.webmin.com/jcameron-key.asc | apt-key add -
+apt-get update;
+apt-get -y autoremove;
+apt-get -y install wget curl;
+echo "
+"
 clear
 echo "
 UPDATE AND UPGRADE PROCESS

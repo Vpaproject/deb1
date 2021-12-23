@@ -130,8 +130,8 @@ tar xf openvpn.tar;rm openvpn.tar
 wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
 chmod +x /etc/rc.local
 # etc
-wget -O /home/vps/public_html/client.ovpn "https://raw.githubusercontent.com/Vpaproject/-/main/client.ovpn"
-sed -i "s/ipserver/$myip/g" /home/vps/public_html/client.ovpn
+wget -O /home/vps/public_html/tcp.ovpn "https://raw.githubusercontent.com/Vpaproject/-/main/client.ovpn"
+sed -i "s/ipserver/$myip/g" /home/vps/public_html/tcp.ovpn
 wget -O /home/vps/public_html/udp.ovpn "https://raw.githubusercontent.com/Vpaproject/-/main/client1.ovpn"
 sed -i "s/ipserver/$myip/g" /home/vps/public_html/udp.ovpn
 wget -O /home/vps/public_html/ssl.ovpn "https://raw.githubusercontent.com/Vpaproject/-/main/ssl.ovpn"

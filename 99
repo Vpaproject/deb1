@@ -1,19 +1,11 @@
  #!/bin/bash
-# ******************************************
-# Program: Autoscript Setup VPS 2019
-# Developer: ARAMAITI
-# Nickname: ARA
-# Modify : @aramaiti85 
-# Date: 11-05-2016
-# Last Updated: 20-01-2019
-# ******************************************
-# START SCRIPT ( RANGERSVPN )
-
+SSH_Banner='https://gakod.com/banner'
+******************************************
 # initializing var
 export DEBIAN_FRONTEND=noninteractive
 OS=`uname -m`;
 MYIP=$(wget -qO- ipv4.icanhazip.com);
-MYIP2="s/xxxxxxxxx/$MYIP/g";
+MYIP2="s/xxxxxxxxx/$ipserver/g";
 SSH_Port1='22'
 SSH_Port2='225'
 # company name details

@@ -197,7 +197,7 @@ newclient() {
 </key>
 <tls-auth>
 `cat /etc/openvpn/tls-auth.key`
-</tls-auth>" > ~/$FNAME
+</tls-auth>
 Config2
 
 

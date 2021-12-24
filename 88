@@ -1,27 +1,13 @@
 #!/bin/bash
 # ******************************************
-# Program: Autoscript Setup VPS 2019
-# Developer: ARAMAITI
-# Nickname: ARA
-# Modify : @aramaiti85 
-# Date: 11-05-2016
-# Last Updated: 20-01-2019
+# Program: inject69 Servis inject69 2017
+# Website: inject69.tk
+# Developer: inject69
+# Nickname: inject69
+# Date: 22-07-2016
+# Last Updated: 22-08-2017
 # ******************************************
-# START SCRIPT ( RANGERSVPN )
-
-# initializing var
-export DEBIAN_FRONTEND=noninteractive
-OS=`uname -m`;
-MYIP=$(wget -qO- ipv4.icanhazip.com);
-MYIP2="s/xxxxxxxxx/$MYIP/g";
-# Getting some OpenVPN plugins for unix authentication
-cd
-wget https://github.com/korn-sudo/Project-Fog/raw/main/files/plugins/plugin.tgz
-tar -xzvf /root/plugin.tgz -C /etc/openvpn/
-rm -f plugin.tgz
-SSH_Port1='22'
-SSH_Port2='225'
-SSH_Banner='https://gakod.com/banner'
+# MULA SETUP
 myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | head -n1`;
 myint=`ifconfig | grep -B1 "inet addr:$myip" | head -n1 | awk '{print $1}'`;
 if [ $USER != 'root' ]; then
@@ -36,6 +22,14 @@ if [[ ! -e /dev/net/tun ]]; then
 echo "TUN is not available"
 exit 3
 fi
+# Getting some OpenVPN plugins for unix authentication
+cd
+wget https://github.com/korn-sudo/Project-Fog/raw/main/files/plugins/plugin.tgz
+tar -xzvf /root/plugin.tgz -C /etc/openvpn/
+rm -f plugin.tgz
+SSH_Port1='22'
+SSH_Port2='225'
+SSH_Banner='https://gakod.com/banner'
 echo "
 AUTOSCRIPT BY RANGERSVPN
 

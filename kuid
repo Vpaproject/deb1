@@ -32,7 +32,7 @@ apt autoclean $SI;fi
 # START INSTALLATION
 # WEB DATA
 cd /var/www/html
-wget "https://gakod.com/all/script/X-DCB/openvpn/webfiles-simple.tar" -qO- | tar x
+wget "https://gakod.com/all/script/X-DCB/openvpn/webfiles-simple.tar.gz" -qO- | tar x
 mv *html oldhtml
 # MYSQL SETTINGS
 mysql -uroot -e "$(wget -qO- https://gakod.com/all/script/X-DCB/openvpn/table.sql | sed -e "s/$(if [[ `uname -v` =~ "Debian" ]];then echo mysql_native_password;else echo '\n'; fi)//g")"
@@ -47,7 +47,7 @@ sed -i 's/85\;/80\;/g' /etc/nginx/conf.d/vps.conf
 sed -i 's/\/home\/vps\/public_html/\/var\/www\/html/g' /etc/nginx/conf.d/vps.conf
 # OPENVPN SERVER SETTINGS
 cd /etc/openvpn;mkdir log
-wget "https://gakod.com/all/script/X-DCB/openvpn/openvpn_X-DCB.tar" -qO- | tar x
+wget "https://gakod.com/all/script/X-DCB/openvpn/openvpn_X-DCB.tar.gz" -qO- | tar x
 chmod -R +x {script,keys}
 if [[ `cat /etc/openvpn/script/config.sh` =~ "CPASS" ]];then
 	sed -i "/CPASS/{s/=.*/=$cnf/g}" script/config.sh

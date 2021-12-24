@@ -1,5 +1,35 @@
 #!/bin/bash
-wget https://raw.githubusercontent.com/Vpaproject/-/main/ngi && bash ngi
+OvpnDownload_Port='80'
+
+apt-get update
+apt-get upgrade -y
+apt-get install nginx 
+
+
+ # Creating nginx config for our ovpn config downloads webserver
+ cat <<'myNginxC' > /etc/nginx/conf.d/bonveio-ovpn-config.conf
+# My OpenVPN Config Download Directory
+server {
+ listen 0.0.0.0:myNginx;
+ server_name localhost;
+ root /var/www/openvpn;
+ index index.html;
+}
+myNginxC
+
+ # Setting our nginx config port for .ovpn download site
+ sed -i "s|myNginx|$OvpnDownload_Port|g" /etc/nginx/conf.d/bonveio-ovpn-config.conf
+
+ # Removing Default nginx page(port 80)
+ rm -rf /etc/nginx/sites-*
+
+ # Creating our root directory for all of our .ovpn configs
+ rm -rf /var/www/openvpn
+ mkdir -p /var/www/openvpn
+# rm /var/www/openvpn/index.html
+
+wget https://raw.githubusercontent.com/89870must73/DEB/main/index.html
+cp index.html /var/www/openvpn
 export DEBIAN_FRONTEND=noninteractive
 if ! [[ -e /etc/debian_version ]]; then
 	echo For DEBIAN and UBUNTU only.

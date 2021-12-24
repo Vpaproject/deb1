@@ -129,7 +129,7 @@ sq=$([ -d /etc/squid ] && echo squid || echo squid3)
 mv /etc/$sq/squid.conf /etc/$sq/squid.confx
 echo 'http_access allow all
 via off
-http_port 0.0.0.0:1103
+http_port 0.0.0.0:8080
 visible_hostname udp.team' > /etc/$sq/squid.conf
 systemctl restart {$sq,openvpn@server,iptab}
 clear

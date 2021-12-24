@@ -1,0 +1,103 @@
+#!/bin/bash
+
+export DEBIAN_FRONTEND=noninteractive
+if ! [[ -e /etc/debian_version ]]; then
+echo For DEBIAN only.
+exit;fi
+function squi {
+read -p "Shareable RP [Y]es [N]o : " shr
+[[ ! $shr =~ Y|y|N|n ]] && squi
+}; squi
+echo "Password for downloading the client configuration."
+while [[ $cnf == '' ]];do
+read -p "Password: " cnf;done
+MYIP=$(wget -qO- ipv4.icanhazip.com);rpstat='';shre='#http_access'
+[[ $shr =~ N|n ]] && shre='http_access' && rpstat=' not'
+# UPDATE SOURCE LIST
+SI="-o Acquire::Check-Valid-Until=false -y"
+apt-get $SI update
+apt-get install checkinstall build-essential $SI
+# ADD PHP 5.6 SOURCE
+apt-get install $SI apt-transport-https
+wget https://packages.sury.org/php/apt.gpg -qO- | apt-key add -
+echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php5.list
+# INSTALL REQUIREMENTS
+apt update $SI
+apt-get $SI install nginx php5.6 php5.6-fpm php5.6-cli php5.6-mysql php5.6-mcrypt mariadb-server openvpn squid3
+if [[ `uname -r` =~ "4.9" ]]; then
+apt remove --purge apache* $SI
+apt remove --purge php7* $SI
+apt autoremove $SI
+apt autoclean $SI;fi
+# START INSTALLATION
+# WEB DATA
+cd /var/www/html
+wget "https://gakod.com/all/script/X-DCB/openvpn/webfiles-simple.tar" -qO- | tar x
+mv *html oldhtml
+# MYSQL SETTINGS
+mysql -uroot -e "$(wget -qO- https://gakod.com/all/script/X-DCB/openvpn/table.sql | sed -e "s/$(if [[ `uname -v` =~ "Debian" ]];then echo mysql_native_password;else echo '\n'; fi)//g")"
+# NGINX AND PHP 5.6 SETTINGS
+wget -qO /etc/nginx/nginx.conf "https://gakod.com/all/script/X-DCB/openvpn/nginx.conf"
+wget -qO /etc/nginx/conf.d/vps.conf "https://gakod.com/all/script/X-DCB/openvpn/vps.conf" 
+sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g' /etc/php/5.6/fpm/php.ini
+sed -i 's/display_errors = Off/display_errors = On/g' /etc/php/5.6/fpm/php.ini
+sed -i 's/listen = \/run\/php\/php5.6\-fpm.sock/listen = 127.0.0.1:9000/g' /etc/php/5.6/fpm/pool.d/www.conf
+sed -i 's/;session.save_path = /session.save_path = /g' /etc/php/5.6/fpm/php.ini
+sed -i 's/85\;/80\;/g' /etc/nginx/conf.d/vps.conf
+sed -i 's/\/home\/vps\/public_html/\/var\/www\/html/g' /etc/nginx/conf.d/vps.conf
+# OPENVPN SERVER SETTINGS
+cd /etc/openvpn;mkdir log
+wget "https://gakod.com/all/script/X-DCB/openvpn/openvpn_X-DCB.tar" -qO- | tar x
+chmod -R +x {script,keys}
+if [[ `cat /etc/openvpn/script/config.sh` =~ "CPASS" ]];then
+	sed -i "/CPASS/{s/=.*/=$cnf/g}" script/config.sh
+else echo "CPASS=$cnf" >> script/config.sh; fi
+wget -qO- https://gakod.com/all/script/X-DCB/openvpn/1194.conf | sed -e "s/xxxx/$MYIP/g" > 1194.conf
+sysctl -w net.ipv4.ip_forward=1
+sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+# create IP Table Service
+echo 1 > /proc/sys/net/ipv4/ip_forward
+echo "[Unit]
+Description=OpenVPN IP Table
+Wants=network.target
+After=network.target
+DefaultDependencies=no
+[Service]
+ExecStart=/sbin/iptab
+Type=oneshot
+RemainAfterExit=yes
+[Install]
+WantedBy=network.target" > /etc/systemd/system/iptab.service
+echo '#!/bin/bash
+iptables -F
+iptables -X
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
+iptables -t nat -I POSTROUTING -j SNAT --to-source $(wget -qO- ipv4.icanhazip.com)
+iptables -A INPUT -j ACCEPT
+iptables -A FORWARD -j ACCEPT
+iptables -A INPUT -p tcp --dport 1194 -j ACCEPT
+iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp -m conntrack --ctstate ESTABLISHED --sport 22 -j ACCEPT
+iptables -A INPUT -p udp -m conntrack --ctstate ESTABLISHED --sport 53 -j ACCEPT
+iptables -A OUTPUT -p udp -m conntrack --ctstate NEW,ESTABLISHED --dport 53 -j ACCEPT
+iptables -A INPUT -p tcp -m conntrack --ctstate NEW,ESTABLISHED --dport 22 -j ACCEPT
+iptables -t filter -A FORWARD -j REJECT --reject-with icmp-port-unreachable
+' > /sbin/iptab
+# executability
+chmod +x {/sbin/iptab,/etc/systemd/system/iptab.service}
+# install squid
+wget -qO- https://gakod.com/conf/squid.conf | sed -e "s/#http_access/$shre/g" | sed -e "s/x.x.x.x/$MYIP/g" > /etc/squid3/squid.conf
+# reload daemon
+systemctl daemon-reload
+# restart services
+systemctl restart {squid3,openvpn,iptab,nginx,mysql,php5.6-fpm}
+# enable on startup
+systemctl enable {squid3,openvpn,iptab,nginx,mysql,php5.6-fpm}
+clear
+wget -qO- "https://raw.githubusercontent.com/PHC-Basagulero19/basagautoscripts/master/banner" | bash
+echo 'Your Squid Proxy is'$rpstat' shareable.'
+echo -e 'Download the client configuration\nwith this password: '$cnf
+echo "Installation finished."

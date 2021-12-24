@@ -112,14 +112,13 @@ cat <<EOF152> /home/vps/public_html/tcp.ovpn
 # Experimental Config only
 # Examples demonstrated below on how to Play with OHPServer
 # Credits to kinGmapua
-
 client
 proto tcp
-dev tun
-setenv FRIENDLY_NAME "I'M MASTA GAKOD"
 remote $MYIP 1103
 http-proxy $MYIP 8080
 http-proxy-retry
+dev tun
+resolv-retry infinite
 nobind
 persist-key
 persist-tun
@@ -133,8 +132,7 @@ tls-version-min 1.2
 tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
 setenv opt block-outside-dns
 verb 3
-
-
+key-direction 1
 <auth-user-pass>
 sam
 sam
@@ -148,6 +146,7 @@ $(cat /etc/openvpn/client.crt)
 <key>
 $(cat /etc/openvpn/client.key)
 </key>
+key-direction 1
 <tls-auth>
 $(cat /etc/openvpn/tls-auth.key)
 </tls-auth>

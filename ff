@@ -1,5 +1,5 @@
 #!/bin/bash
-OvpnDownload_Port='80'
+OvpnDownload_Port='85'
 
 apt-get update
 apt-get upgrade -y
@@ -168,8 +168,6 @@ wget -qO- "https://gakod.com/all/script/X-DCB/banner" | bash
 echo "Finished!"
 newclient
 
-
-# TNT Mobile Legends 10 Promo
 cat <<Config2> /var/www/openvpn/tcp.ovpn
 # Credits to Gakod
 # Allahumma sholli 'ala Muhammad wa 'ala ali Muhammad
@@ -179,34 +177,13 @@ cat <<Config2> /var/www/openvpn/tcp.ovpn
 #
 # Experimental Config only
 # Examples demonstrated below on how to Play with OHPServer
-#
 
 client
 dev tun
 proto tcp
 remote-cert-tls server
-
-# We can play this one, put any host on the line
-# remote anyhost.com anyport
-# remote www.google.com.ph 443
-#
-# We can also play with CRLFs
-#remote "HEAD https://ajax.googleapis.com HTTP/1.1/r/n/r/n"
-# Every types of Broken remote line setups/crlfs/payload are accepted, just put them inside of double-quotes
-remote "https://devvault.digi.com.my 443"
-## use this line to modify OpenVPN remote port (this will serve as our fake ovpn port)
-port 443
-
-# This proxy uses as our main forwarder for OpenVPN tunnel.
+remote $IPADDR 1103
 http-proxy $IPADDR 8087
-http-proxy-retry
-# We can also play our request headers here, everything are accepted, put them inside of a double-quotes.
-http-proxy-option VERSION 1.1
-http-proxy-option CUSTOM-HEADER ""
-http-proxy-option CUSTOM-HEADER "Host: www.phcorner.net%2F"
-http-proxy-option CUSTOM-HEADER "X-Forwarded-Host: www.digicert.net%2F"
-http-proxy-option CUSTOM-HEADER ""
-
 http-proxy-option VERSION 1.1
 http-proxy-option CUSTOM-HEADER Host weixin.qq.cn
 setenv opt block-outside-dns
@@ -214,8 +191,6 @@ cipher AES-128-CBC
 auth SHA1
 key-direction 1
 auth-nocache
-newclient() {
-	echo -e "`cat /etc/openvpn/client-template.txt`
 <ca>
 `cat /etc/openvpn/ca.crt`
 </ca>

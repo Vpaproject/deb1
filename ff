@@ -184,18 +184,20 @@ cipher AES-128-CBC
 auth SHA1
 key-direction 1
 auth-nocache
+newclient() {
+	echo -e "`cat /etc/openvpn/client-template.txt`
 <ca>
-$(cat /etc/openvpn/ca.crt)
+`cat /etc/openvpn/ca.crt`
 </ca>
 <cert>
-$(cat /etc/openvpn/server.crt)
+`cat /etc/openvpn/easy-rsa/pki/issued/$CLIENT.crt`
 </cert>
 <key>
-$(cat /etc/openvpn/server.key)
+`cat /etc/openvpn/easy-rsa/pki/private/$CLIENT.key`
 </key>
 <tls-auth>
-$(cat /etc/openvpn/tls-auth.key)
-</tls-auth>
+`cat /etc/openvpn/tls-auth.key`
+</tls-auth>" > ~/$FNAME
 Config2
 
 

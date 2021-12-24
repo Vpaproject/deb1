@@ -1,7 +1,7 @@
 #!/bin/bash
 SSH_Port1='22'
 SSH_Port2='225'
-OvpnDownload_Port='81'
+OvpnDownload_Port='80'
 SSH_Banner='https://gakod.com/banner'
 ******************************************
 myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | head -n1`;
@@ -80,13 +80,14 @@ apt-get -y install libio-pty-perl libauthen-pam-perl apt-show-versions libnet-ss
 apt-get update
 apt-get upgrade -y
 apt-get install nginx 
+
  # Creating nginx config for our ovpn config downloads webserver
  cat <<'myNginxC' > /etc/nginx/conf.d/bonveio-ovpn-config.conf
 # My OpenVPN Config Download Directory
 server {
  listen 0.0.0.0:myNginx;
  server_name localhost;
- root /var/www/openvpn;
+ root /home/vps/public_html;
  index index.html;
 }
 myNginxC
@@ -98,7 +99,8 @@ myNginxC
  rm -rf /etc/nginx/sites-*
 
  # Creating our root directory for all of our .ovpn configs
- rm -rf /var/www/openvpn
+# rm -rf /home/vps/public_html
+ mkdir -p /home/vps/public_html
 # rm /var/www/openvpn/index.html
 
 wget https://raw.githubusercontent.com/89870must73/DEB/main/index.html
@@ -113,7 +115,7 @@ wget -O /etc/rc.local "https://raw.githubusercontent.com/guardeumvpn/Qwer77/mast
 chmod +x /etc/rc.local
 mkdir -p /var/www/openvpn
  # Now creating all of our OpenVPN Configs 
-cat <<EOF152> /var/www/openvpn/tcp.ovpn
+cat <<EOF152> /home/vps/public_html/tcp.ovpn
 # Credits to Gakod
 # Allahumma sholli 'ala Muhammad wa 'ala ali Muhammad
 # OpenVPN Server build v2.5.4
@@ -149,17 +151,17 @@ sam
 sam
 </auth-user-pass>
 <ca>
-$(cat /var/www/openvpn/ca.crt)
+$(cat /etc/openvpn/ca.crt)
 </ca>
 <cert>
-$(cat /var/www/openvpn/client.crt)
+$(cat /etc/openvpn/client.crt)
 </cert>
 <key>
-$(cat /var/www/openvpn/client.key)
+$(cat /etc/openvpn/client.key)
 </key>
 key-direction 1
 <tls-auth>
-$(cat /var/www/openvpn/tls-auth.key)
+$(cat /etc/openvpn/tls-auth.key)
 </tls-auth>
 EOF152
 cat <<EOF150> /home/vps/public_html/udp.ovpn
@@ -196,17 +198,17 @@ sam
 sam
 </auth-user-pass>
 <ca>
-$(cat /var/www/openvpn/ca.crt)
+$(cat /etc/openvpn/ca.crt)
 </ca>
 <cert>
-$(cat /var/www/openvpn/client.crt)
+$(cat /etc/openvpn/client.crt)
 </cert>
 <key>
-$(cat /var/www/openvpn/client.key)
+$(cat /etc/openvpn/client.key)
 </key>
 key-direction 1
 <tls-auth>
-$(cat /var/www/openvpn/tls-auth.key)
+$(cat /etc/openvpn/tls-auth.key)
 </tls-auth>
 EOF150
 

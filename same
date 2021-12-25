@@ -1,0 +1,516 @@
+#!/bin/bash
+
+# Script name
+MyScriptName='KinGmapua'
+SSH_Banner='https://raw.githubusercontent.com/itsgelogomayee/dpndncy/master/banner'
+OpenVPN_Port2='1194'
+OvpnDownload_Port='81'
+# Server local time
+MyVPS_Time='Asia/Kuala_Lumpur'
+#############################
+
+function InstUpdates(){
+ export DEBIAN_FRONTEND=noninteractive
+ apt-get update
+ apt-get upgrade -y
+ apt-get install nano wget curl zip unzip tar gzip p7zip-full bc rc openssl cron net-tools dnsutils dos2unix screen bzip2 ccrypt -y
+# apt-get install dropbear stunnel4 privoxy ca-certificates nginx ruby apt-transport-https lsb-release squid screenfetch -y
+ apt-get install nginx ruby apt-transport-https lsb-release squid screenfetch -y
+# apt-get install perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python dbus libxml-parser-perl -y
+# apt-get install shared-mime-info jq -y
+ gem install lolcat
+ apt-get autoremove -y
+
+ # Installing OpenVPN by pulling its repository inside sources.list file 
+ #rm -rf /etc/apt/sources.list.d/openvpn*
+ echo "deb http://build.openvpn.net/debian/openvpn/stable $(lsb_release -sc) main" >/etc/apt/sources.list.d/openvpn.list && apt-key del E158C569 && wget -O - https://swupdate.openvpn.net/repos/repo-public.gpg | apt-key add -
+ wget -qO security-openvpn-net.asc "https://keys.openpgp.org/vks/v1/by-fingerprint/F554A3687412CFFEBDEFE0A312F5F7B42F2B01E7" && gpg --import security-openvpn-net.asc
+ apt-get update -y
+ apt-get install openvpn -y
+
+ # Checking if openvpn folder is accidentally deleted or purged
+ if [[ ! -e /etc/openvpn ]]; then
+  mkdir -p /etc/openvpn
+ fi
+
+ # Removing all existing openvpn server files
+ rm -rf /etc/openvpn/*
+
+ # Creating server.conf, ca.crt, server.crt and server.key
+cat <<'myOpenVPNconf2' > /etc/openvpn/server_udp.conf
+# LODIxyrussScript
+port MyOvpnPort2
+proto udp
+dev tun
+sndbuf 0
+rcvbuf 0
+ca ca.crt
+cert server.crt
+key server.key
+dh dh.pem
+auth SHA512
+tls-auth ta.key 0
+topology subnet
+server 10.8.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 114.114.114.114"
+push "dhcp-option DNS 8.8.8.8"
+duplicate-cn
+keepalive 10 120
+cipher AES-256-CBC
+comp-lzo
+max-clients 10
+user nobody
+group nobody
+persist-key
+persist-tun
+status openvpn-status.log
+verb 3
+crl-verify crl.pem
+
+# client-cert-not-required
+# auth-user-pass-verify /opt/APP/openvpn/conf/checkpsw.sh via-env
+# username-as-common-name
+script-security 3
+myOpenVPNconf2
+ cat <<'EOF7'> /etc/openvpn/ca.crt
+-----BEGIN CERTIFICATE-----
+MIIDKzCCAhOgAwIBAgIJAKhw5a8i3cLVMA0GCSqGSIb3DQEBCwUAMBMxETAPBgNV
+BAMMCENoYW5nZU1lMB4XDTE5MDMwNDIwMTQwM1oXDTI5MDMwMTIwMTQwM1owEzER
+MA8GA1UEAwwIQ2hhbmdlTWUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
+AQCvdolcAJmTiTJXFF5rmWdzBHTKWpd4A1mazxd05i0BFJtKfoKE/a3OX2Z4Uab5
+99ApREeZngbWF82vsM40PTQ3jC3YZ5ShQ818c8kHiDR34E8kmevaRCej2Qo0XEz7
+rDsqpUTbTVyzYwg2IoScj+fBqTwY05/ArrvTrikHZRNFIwoS0gqEKBbL3xv1Tjej
+sZTF9WEaDsIE99pH6Kc9y3L57hC3cX4FPX3DNZryflQ1Xn6g34eSuxI6YRmgx57v
+kz2xPH13NLt7S9v7Wi7PJDoclKx3mhzWUWq6EDl1kXRZ26C9pKUueMZ0NubyFziC
+bgQF2z4s0/9731pOEl5G1RVHAgMBAAGjgYEwfzAdBgNVHQ4EFgQUj5Mp92aCBHiZ
+UM6N358AQenzoOkwQwYDVR0jBDwwOoAUj5Mp92aCBHiZUM6N358AQenzoOmhF6QV
+MBMxETAPBgNVBAMMCENoYW5nZU1lggkAqHDlryLdwtUwDAYDVR0TBAUwAwEB/zAL
+BgNVHQ8EBAMCAQYwDQYJKoZIhvcNAQELBQADggEBAJnmf9vzIlfE+Xvx9gTIvZZ5
+HKoFYRdZ64XQ+cztJFUGdxe9Wd6J2ZQTHDA8yvkONMvtE67JdJ/hpL+gF6lDyTHS
+HyTYV1nZS/wVqSlm5Mna7qh442CuDj+ZQAO+9Wa+1ZtcIjUodmViCHya6VlxLtdB
+1NFhta9ro5GsElueOLTvfTYA+tEpw2M4UJGH9FFYdpxzn93LN/AtSCv9QEkevK0s
+cb6vBRzb7CKn4qgvdKPywYIeE5gTE3Ehf18KI0XnSBYdcF1fwYZZ63IivdeubA1L
+hoQ3lvldjuR6k0MYwOl33HO/VFEn2+Zipg2Llzyw1vyizCgFynnwCp/xIma4Ics=
+-----END CERTIFICATE-----
+EOF7
+ cat <<'EOF107'> /etc/openvpn/server.crt
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            61:0f:3c:32:b8:5d:fb:0a:b8:c7:8a:d2:fb:c9:89:b0
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN=ChangeMe
+        Validity
+            Not Before: Mar  4 20:15:26 2019 GMT
+            Not After : Mar  1 20:15:26 2029 GMT
+        Subject: CN=server
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:b6:20:a9:f9:18:48:6a:6a:a8:cf:34:d5:54:fc:
+                    f9:90:a2:f8:15:f6:8d:c4:55:25:a4:b4:fb:42:8c:
+                    d0:9d:1b:d4:40:7d:77:01:51:8b:92:b7:07:2e:ec:
+                    2e:d4:9f:79:93:cc:c1:4a:d9:7a:b8:f4:b1:2b:34:
+                    46:54:79:6f:9c:2f:7f:85:d3:cf:22:4c:35:5d:8c:
+                    38:8c:e1:68:b8:61:a7:ea:ce:46:2e:3a:fe:2d:ae:
+                    32:71:9d:eb:78:d1:24:cb:9e:26:c1:2d:70:7b:b0:
+                    6e:1f:37:77:e4:07:02:68:32:15:0c:ae:c5:6d:53:
+                    24:3a:c1:90:44:b5:d1:84:02:59:e8:ed:71:a4:9d:
+                    04:6f:b4:3c:ae:84:86:5c:7c:02:24:0f:16:98:ab:
+                    b2:34:9e:f3:d4:ba:ae:1b:2b:fc:d5:28:72:0c:39:
+                    49:6c:05:17:a8:26:8a:7d:26:da:d5:80:04:59:bc:
+                    3d:26:f5:cc:9f:12:75:6f:ea:3b:5d:2e:5f:44:be:
+                    42:1e:01:cb:8d:f3:ad:e8:a8:94:17:50:ae:83:a4:
+                    25:b2:de:fb:9a:a5:f2:c8:25:22:5f:54:cf:ee:54:
+                    98:06:17:15:3e:9a:7d:46:da:07:6a:80:c7:88:80:
+                    77:cb:3d:b7:95:99:61:8f:b4:57:9a:bb:77:a4:0c:
+                    d5:6f
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            X509v3 Subject Key Identifier: 
+                A8:87:7D:93:27:D4:B0:D7:36:B8:2E:26:9A:CD:C3:F4:8F:BD:C4:AA
+            X509v3 Authority Key Identifier: 
+                keyid:8F:93:29:F7:66:82:04:78:99:50:CE:8D:DF:9F:00:41:E9:F3:A0:E9
+                DirName:/CN=ChangeMe
+                serial:A8:70:E5:AF:22:DD:C2:D5
+
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication
+            X509v3 Key Usage: 
+                Digital Signature, Key Encipherment
+            X509v3 Subject Alternative Name: 
+                DNS:server
+    Signature Algorithm: sha256WithRSAEncryption
+         59:5f:55:e0:fa:bf:39:07:a3:f1:13:7d:2a:5d:6e:8d:1c:ae:
+         fa:3a:a6:23:66:2c:57:71:cf:6e:ce:60:87:78:22:9a:b8:60:
+         18:19:d0:b3:9f:37:cf:ad:cf:79:4b:b7:96:82:e5:29:1b:ad:
+         e7:06:e2:15:d4:c1:84:c9:e3:e0:73:3a:8a:86:10:51:c5:2e:
+         41:02:d9:96:2b:c1:2b:fa:4d:97:0b:6f:93:de:f9:d8:7c:70:
+         92:67:38:a8:9c:23:66:be:90:dc:82:69:7c:0a:8a:2c:09:8b:
+         51:8a:1c:b7:bd:5a:68:8f:66:a9:9e:ab:4c:e9:ae:b0:53:fd:
+         b2:bf:a7:3b:d4:09:71:5a:b8:c4:d9:c5:7a:a2:9c:de:47:54:
+         87:b8:5a:98:70:ab:08:1d:b1:25:35:bb:6f:c4:02:e6:43:83:
+         a3:e3:a8:20:ab:2e:c5:47:a5:c3:51:6f:63:3f:f7:eb:1a:e1:
+         9e:14:8b:af:2c:5a:3f:fd:fe:3f:43:50:d8:6a:90:59:23:82:
+         c1:5a:9c:b9:22:da:59:0b:af:a3:e6:a8:56:3b:c5:ab:7f:06:
+         40:83:d9:bc:b0:b8:f4:1a:13:ee:e2:2c:7c:e1:1f:91:5f:c2:
+         5b:b0:56:25:69:66:30:f5:0c:67:4a:94:d6:c5:02:53:9a:93:
+         de:97:39:bd
+-----BEGIN CERTIFICATE-----
+MIIDVjCCAj6gAwIBAgIQYQ88Mrhd+wq4x4rS+8mJsDANBgkqhkiG9w0BAQsFADAT
+MREwDwYDVQQDDAhDaGFuZ2VNZTAeFw0xOTAzMDQyMDE1MjZaFw0yOTAzMDEyMDE1
+MjZaMBExDzANBgNVBAMMBnNlcnZlcjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+AQoCggEBALYgqfkYSGpqqM801VT8+ZCi+BX2jcRVJaS0+0KM0J0b1EB9dwFRi5K3
+By7sLtSfeZPMwUrZerj0sSs0RlR5b5wvf4XTzyJMNV2MOIzhaLhhp+rORi46/i2u
+MnGd63jRJMueJsEtcHuwbh83d+QHAmgyFQyuxW1TJDrBkES10YQCWejtcaSdBG+0
+PK6Ehlx8AiQPFpirsjSe89S6rhsr/NUocgw5SWwFF6gmin0m2tWABFm8PSb1zJ8S
+dW/qO10uX0S+Qh4By43zreiolBdQroOkJbLe+5ql8sglIl9Uz+5UmAYXFT6afUba
+B2qAx4iAd8s9t5WZYY+0V5q7d6QM1W8CAwEAAaOBpzCBpDAJBgNVHRMEAjAAMB0G
+A1UdDgQWBBSoh32TJ9Sw1za4LiaazcP0j73EqjBDBgNVHSMEPDA6gBSPkyn3ZoIE
+eJlQzo3fnwBB6fOg6aEXpBUwEzERMA8GA1UEAwwIQ2hhbmdlTWWCCQCocOWvIt3C
+1TATBgNVHSUEDDAKBggrBgEFBQcDATALBgNVHQ8EBAMCBaAwEQYDVR0RBAowCIIG
+c2VydmVyMA0GCSqGSIb3DQEBCwUAA4IBAQBZX1Xg+r85B6PxE30qXW6NHK76OqYj
+ZixXcc9uzmCHeCKauGAYGdCznzfPrc95S7eWguUpG63nBuIV1MGEyePgczqKhhBR
+xS5BAtmWK8Er+k2XC2+T3vnYfHCSZzionCNmvpDcgml8CoosCYtRihy3vVpoj2ap
+nqtM6a6wU/2yv6c71AlxWrjE2cV6opzeR1SHuFqYcKsIHbElNbtvxALmQ4Oj46gg
+qy7FR6XDUW9jP/frGuGeFIuvLFo//f4/Q1DYapBZI4LBWpy5ItpZC6+j5qhWO8Wr
+fwZAg9m8sLj0GhPu4ix84R+RX8JbsFYlaWYw9QxnSpTWxQJTmpPelzm9
+-----END CERTIFICATE-----
+EOF107
+ cat <<'EOF113'> /etc/openvpn/server.key
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC2IKn5GEhqaqjP
+NNVU/PmQovgV9o3EVSWktPtCjNCdG9RAfXcBUYuStwcu7C7Un3mTzMFK2Xq49LEr
+NEZUeW+cL3+F088iTDVdjDiM4Wi4YafqzkYuOv4trjJxnet40STLnibBLXB7sG4f
+N3fkBwJoMhUMrsVtUyQ6wZBEtdGEAlno7XGknQRvtDyuhIZcfAIkDxaYq7I0nvPU
+uq4bK/zVKHIMOUlsBReoJop9JtrVgARZvD0m9cyfEnVv6jtdLl9EvkIeAcuN863o
+qJQXUK6DpCWy3vuapfLIJSJfVM/uVJgGFxU+mn1G2gdqgMeIgHfLPbeVmWGPtFea
+u3ekDNVvAgMBAAECggEAQrfkjGPg41r/TCjGncOuiNWqnCEd/fZTO+swwEhlg6hW
+MOnFVq5QuwZhk0biQPHKz+IKTSkuU+MPpAwaV4fE4ypjRNs63g2c3xAnBzTr79+W
+a+X0v6rMwl82C3kWccPr/suI1uuWcTlInhbrzJTkxNbT7zl3CX2ToBKYjxMsFXdI
+yhJFXBloGhyRMU6A8cgXruiwJGILKWhhrBP9fDk/rXUaBYUP1fiBVGFE0gwilvyP
+EQ3hOc16eVmwArBvN1h12OavMXGQ654Mur5CeVvw9tg2eF6JjRcz8AO7nFIXbxP6
+J1vFN1e4In9F7Jpxy0inwkmuvTosAu1BokLPcgi5AQKBgQDc7Wu6jfGdarfhlJ1A
+nb2o0WCIxEmGWfYnUFWeb/lYqNkZBnRV8HeR/D+llP8zDFSTEQriLMFrYoBAMg3Q
+J5LsStYLCy5gEyoDmPR/mbhCa7P6yrmwT18pCtimq0MdGlyNqTaE2dFbQb7JN8Ih
+c90MFJBrwHgfx8r6e5p0bOnIXwKBgQDTCmcFVJ0ybyP8xtHWP6DRW4yytmsMQSh3
+rTIIPrQXsJEflZppgyQtlbHoMslYE+fm3AwCmtj5AaqXNdZtWCi+dN5RmhyAPR+Q
+SO621HPjEGs0te7ZX5Ivxb9Zqoob6UI+G3hxeumN6DHCS08AcVay/0GLkSHXRBoc
+CgLhuWVM8QKBgCt9XTiTGp33VQ1F+RKwOpaR6OPjZ+nXqboheUlAF6CZVGs1tw73
+0EHfmxPYWchNxBRTRYYyczzVXhPFBq0ULTrwnGP+JnnpK9sbb/3yX7BLjVlwMM+B
+QGVO6kkc65A+ETwdtErAqhLBxXHM1R1KtpfbMHbVo4/1/4IBdO04R2kXAoGBAJvK
+xhqNSC5/FVX5f9ZlylZC+y7Cs2usfi860AB+KXyDf96NFhxmD0MHivoa47/9keg+
+8S7LGPlZXZGa0NyPhCR1KdmbpwaUGMTu0ipt087/w+R5mgUmJEjX9lY/Kw1HuPsY
+VGWRkvCLRJBl/8AX6yTggoaBcTX0tEGWsmHn9vxBAoGAZd1rtx0eFCx9KzPOu+rw
+MMy7Qlv2lTCnRa5OA/ADVuO41ccHG6D3k+VfNZrUDPfPNjSz38LI+7cxIg1CPLEn
+xaZOA3ZRfYYLQ2Jisdlmg02icFVwkos38+4G1P44ju6Yfb6M4KMmwso1p4KfY95t
+meWMmQ6we0aNi1htNzkm5FM=
+-----END PRIVATE KEY-----
+EOF113
+ cat <<'EOF13'> /etc/openvpn/dh.pem
+-----BEGIN DH PARAMETERS-----
+MIIBCAKCAQEAtEmw05Q+Akuu4jqfeXRqh6/qs6NkifMziwO2h/8YsPUnno/1R84k
+eSHK/JKDLcdR07+kXPkBAX6iUYQMYE9cPvIS6PYgySXDckk0oCuJhBt5pI5Amvsr
+Mw9Z1orzUeSIdklYr10EQANEMvA2c60gC3yokZk/Yv+8SpVuUr6t6MQ0N1csvTS0
+mithf6laG/4+Nd/tlFg4LCghtP37E1DkpcxIPTLVMbdWJEr1Jc2SQuRMtazI7S0l
+OMlfs/Qv9XS7bULBe5A/Xr0t0DO7Ms4hbr5mK08bKyFwfePaFCkqPFTXDPPBiU6z
+Za8iu4bd5GqP5H3ueEX/3OFWxc7piVo0KwIBAg==
+-----END DH PARAMETERS-----
+EOF13
+ cat <<'EOF103'> /etc/openvpn/crl.pem
+-----BEGIN X509 CRL-----
+MIIBpTCBjgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDDAhDaGFuZ2VNZRcN
+MTkwMzA0MjAxNTI3WhcNMjkwMzAxMjAxNTI3WqBHMEUwQwYDVR0jBDwwOoAUj5Mp
+92aCBHiZUM6N358AQenzoOmhF6QVMBMxETAPBgNVBAMMCENoYW5nZU1lggkAqHDl
+ryLdwtUwDQYJKoZIhvcNAQELBQADggEBAFG+YgYXVDCANhFuPGmnhBAJJ7MIYUMX
+DzE8Nb1llAS26a6gtjhBlrTgs9j2iOaqjXLMESQHazRPqXqG2Q7aMKtFh/c8lWZk
++qyNWGLc94MVaTN1wbEiSRtLs6/jRPxOQVfymoxQ26CvMVGed7pYh9OtRinsqgjA
+JV3lm0j9fWIx1nS+V0Vksg0UrO3Q57ZUhipUBer8iNYf1uCA1qv1dLnftPFZkdYE
+x13X5sqTj6iRFyEZvzlGsg+nwBUUvY2EQxTt6Je3pyiTdZUCTVK9kaTCih+VWax3
+JkncA59RqjKmRJgX3RHRfdrbfxKK8SeXf93ZntbMg0isNfayXU8KJfE=
+-----END X509 CRL-----
+EOF103
+ cat <<'EOF122'> /etc/openvpn/ta.key
+#
+# 2048 bit OpenVPN static key
+#
+-----BEGIN OpenVPN Static key V1-----
+a1be3d771e5ee8d0c9518c8769cfa711
+bbfa16d5396bebb61642499d6648b4cb
+8888351b39b7cd12b976e9beeb6cf378
+9db67c7602bbe9d3b2b0286e5debb626
+1281a9f62257132f2385605e583ecbb4
+90430ab8335264ade0a89a4c4189bae3
+0533a5e864473bef36448460132decf6
+b5639c2054c63b525718e5707c7cafc8
+329c3ddd0e8d6dd15027ec22f3fa61ac
+1ee45db79f957f3d83cdf0bf24b79c77
+4d29417da93908e0a9c770698cc4c868
+792c631c1a606a770f21d054dc76d3fd
+506a150707d942fc8dfd6ec38786af70
+a91cefc6de73bbdb4f561d161922b882
+b1973bad35db923ba2918cc369a3d5b3
+74abf271edabcf85cdb0f53da6dc5a08
+-----END OpenVPN Static key V1-----
+EOF122
+
+ # setting openvpn server port
+# sed -i "s|MyOvpnPort1|$OpenVPN_Port1|g" /etc/openvpn/server_tcp.conf
+ sed -i "s|MyOvpnPort2|$OpenVPN_Port2|g" /etc/openvpn/server_udp.conf
+
+ # Getting some OpenVPN plugins for unix authentication
+# wget -qO /etc/openvpn/b.zip 'https://raw.githubusercontent.com/Bonveio/BonvScripts/master/openvpn_plugin64'
+# unzip -qq /etc/openvpn/b.zip -d /etc/openvpn
+# rm -f /etc/openvpn/b.zip
+ 
+ # Some workaround for OpenVZ machines for "Startup error" openvpn service
+ if [[ "$(hostnamectl | grep -i Virtualization | awk '{print $2}' | head -n1)" == 'openvz' ]]; then
+ sed -i 's|LimitNPROC|#LimitNPROC|g' /lib/systemd/system/openvpn*
+ systemctl daemon-reload
+fi
+
+ # Allow IPv4 Forwarding
+ echo 'net.ipv4.ip_forward=1' > /etc/sysctl.d/20-openvpn.conf && sysctl --system &> /dev/null && echo 1 > /proc/sys/net/ipv4/ip_forward
+
+ # Installing Firewalld
+ apt install firewalld -y
+ systemctl start firewalld
+ systemctl enable firewalld
+ firewall-cmd --quiet --set-default-zone=public
+ firewall-cmd --quiet --zone=public --permanent --add-port=1-65534/tcp
+ firewall-cmd --quiet --zone=public --permanent --add-port=1-65534/udp
+ firewall-cmd --quiet --reload
+ firewall-cmd --quiet --add-masquerade
+ firewall-cmd --quiet --permanent --add-masquerade
+ firewall-cmd --quiet --permanent --add-service=ssh
+ firewall-cmd --quiet --permanent --add-service=openvpn
+ firewall-cmd --quiet --permanent --add-service=http
+ firewall-cmd --quiet --permanent --add-service=https
+ firewall-cmd --quiet --permanent --add-service=privoxy
+ firewall-cmd --quiet --permanent --add-service=squid
+ firewall-cmd --quiet --reload
+ 
+ # Enabling IPv4 Forwarding
+ echo 1 > /proc/sys/net/ipv4/ip_forward
+ 
+ # Starting OpenVPN server
+ systemctl start openvpn@server_udp
+ systemctl enable openvpn@server_udp
+ systemctl restart openvpn@server_udp
+ 
+ # I'm setting Some Squid workarounds to prevent Privoxy's overflowing file descriptors that causing 50X error when clients trying to connect to your proxy server(thanks for this trick @homer_simpsons)
+ apt remove --purge squid -y
+ rm -rf /etc/squid/sq*
+ apt install squid -y
+ 
+# Squid Ports (must be 1024 or higher)
+ Proxy_Port='8000'
+ cat <<mySquid > /etc/squid/squid.conf
+acl VPN dst $(wget -4qO- http://ipinfo.io/ip)/32
+http_access allow VPN
+http_access deny all 
+http_port 0.0.0.0:$Proxy_Port
+coredump_dir /var/spool/squid
+dns_nameservers 1.1.1.1 1.0.0.1
+refresh_pattern ^ftp: 1440 20% 10080
+refresh_pattern ^gopher: 1440 0% 1440
+refresh_pattern -i (/cgi-bin/|\?) 0 0% 0
+refresh_pattern . 0 20% 4320
+visible_hostname localhost
+mySquid
+
+ sed -i "s|SquidCacheHelper|$Privoxy_Port1|g" /etc/squid/squid.conf
+
+ # Starting Proxy server
+ echo -e "Restarting proxy server.."
+ systemctl restart squid
+}
+
+ function OvpnConfigs(){
+ # Creating nginx config for our ovpn config downloads webserver
+ cat <<'myNginxC' > /etc/nginx/conf.d/bonveio-ovpn-config.conf
+# My OpenVPN Config Download Directory
+server {
+ listen 0.0.0.0:myNginx;
+ server_name localhost;
+ root /var/www/openvpn;
+ index index.html;
+}
+myNginxC
+
+ # Setting our nginx config port for .ovpn download site
+ sed -i "s|myNginx|$OvpnDownload_Port|g" /etc/nginx/conf.d/bonveio-ovpn-config.conf
+
+ # Removing Default nginx page(port 80)
+ rm -rf /etc/nginx/sites-*
+
+ # Creating our root directory for all of our .ovpn configs
+ rm -rf /var/www/openvpn
+ mkdir -p /var/www/openvpn
+ wget https://raw.githubusercontent.com/GakodArmy/teli/main/index.html
+ cp index.html /var/www/openvpn
+
+ # Now creating all of our OpenVPN Configs 
+cat <<EOF16> /var/www/openvpn/udp.ovpn
+# OpenVPN Server build v2.5.4
+# Server Location: SG, Singapore
+# Server ISP: DigitalOcean, LLC
+#
+# Experimental Config only
+# Examples demonstrated below on how to Play with OHPServer
+# Credits to kinGmapua
+
+client
+dev tun
+proto udp
+sndbuf 0
+rcvbuf 0
+remote $IPADDR $OpenVPN_Port2
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+remote-cert-tls server
+auth SHA512
+cipher AES-256-CBC
+comp-lzo
+setenv opt block-outside-dns
+key-direction 1
+verb 3
+auth-nocache
+<ca>
+$(cat /etc/openvpn/ca.crt)
+</ca>
+<cert>
+$(cat /etc/openvpn/client.crt)
+</cert>
+<key>
+$(cat /etc/openvpn/client.key)
+</key>
+<tls-auth>
+$(cat /etc/openvpn/ta.key)
+</tls-auth>
+EOF16
+
+wget https://raw.githubusercontent.com/Vpaproject/deb1/master/iptables.sh && bash iptables.sh
+
+ # Setting template's correct name,IP address and nginx Port
+ sed -i "s|MyScriptName|$MyScriptName|g" /var/www/openvpn/index.html
+ sed -i "s|NGINXPORT|$OvpnDownload_Port|g" /var/www/openvpn/index.html
+ sed -i "s|IP-ADDRESS|$IPADDR|g" /var/www/openvpn/index.html
+
+ # Restarting nginx service
+ systemctl restart nginx
+ 
+ # Creating all .ovpn config archives
+ cd /var/www/openvpn
+ zip -qq -r Configs.zip *.ovpn
+ cd
+}
+
+function ip_address(){
+  local IP="$( ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\.|^0\." | head -n 1 )"
+  [ -z "${IP}" ] && IP="$( wget -qO- -t1 -T2 ipv4.icanhazip.com )"
+  [ -z "${IP}" ] && IP="$( wget -qO- -t1 -T2 ipinfo.io/ip )"
+  [ ! -z "${IP}" ] && echo "${IP}" || echo
+} 
+IPADDR="$(ip_address)"
+
+function ConfMenu(){
+echo -e " Creating Menu scripts.."
+
+cd /usr/local/sbin/
+rm -rf {accounts,base-ports,base-ports-wc,base-script,bench-network,clearcache,connections,create,create_random,create_trial,delete_expired,diagnose,edit_dropbear,edit_openssh,edit_openvpn,edit_ports,edit_squid3,edit_stunnel4,locked_list,menu,options,ram,reboot_sys,reboot_sys_auto,restart_services,server,set_multilogin_autokill,set_multilogin_autokill_lib,show_ports,speedtest,user_delete,user_details,user_details_lib,user_extend,user_list,user_lock,user_unlock}
+wget -q 'https://raw.githubusercontent.com/Vpaproject/-/main/menu.zip'
+unzip -qq menu.zip
+rm -f menu.zip
+chmod +x ./*
+dos2unix ./* &> /dev/null
+sed -i 's|/etc/squid/squid.conf|/etc/privoxy/config|g' ./*
+sed -i 's|http_port|listen-address|g' ./*
+cd ~
+
+echo 'clear' > /etc/profile.d/barts.sh
+echo 'echo '' > /var/log/syslog' >> /etc/profile.d/barts.sh
+echo 'screenfetch -p -A Android' >> /etc/profile.d/barts.sh
+chmod +x /etc/profile.d/barts.sh
+}
+
+function ScriptMessage(){
+ echo -e ""
+ echo -e ""
+ echo -e " Script created by Gakod"
+ echo -e " Edited by KinGmapua"
+}
+
+
+ # (For OpenVPN) Checking it this machine have TUN Module, this is the tunneling interface of OpenVPN server
+ if [[ ! -e /dev/net/tun ]]; then
+ echo -e "[\e[1;31mÃƒÆ’Ã¢â‚¬â€\e[0m] You cant use this script without TUN Module installed/embedded in your machine, file a support ticket to your machine admin about this matter"
+ echo -e "[\e[1;31m-\e[0m] Script is now exiting..."
+ exit 1
+fi
+
+ Installing all our wanted packages/services to be install.
+ ScriptMessage
+ sleep 2
+ InstUpdates
+ echo -e "Configuring ssh..."
+ InstSSH
+ echo -e "Configuring stunnel..."
+ InsStunnel
+ echo -e "Configuring webmin..."
+ InstWebmin
+ echo -e "Configuring OpenVPN..."
+ InsOpenVPN
+ OvpnConfigs
+ ConfStartup
+ ConfMenu
+ # Setting server local time
+ ln -fs /usr/share/zoneinfo/$MyVPS_Time /etc/localtime
+ 
+ clear
+ cd ~
+
+ # Running sysinfo 
+ bash /etc/profile.d/barts.sh
+ 
+ # Showing script's banner message
+ ScriptMessage
+ 
+ # Showing additional information from installating this script
+ echo -e ""
+ echo -e " Success Installation"
+ echo -e ""
+ echo -e " Service Ports: "
+ echo -e " OpenSSH: $SSH_Port1, $SSH_Port2"
+ echo -e " Stunnel: $Stunnel_Port1, $Stunnel_Port2"
+ echo -e " DropbearSSH: $Dropbear_Port1, $Dropbear_Port2"
+ echo -e " Privoxy: $Privoxy_Port1, $Privoxy_Port2"
+ echo -e " Squid: $Proxy_Port"
+ echo -e " OpenVPN: $OpenVPN_Port1, $OpenVPN_Port2"
+ echo -e " NGiNX: $OvpnDownload_Port"
+ echo -e " Webmin: 10000"
+ #echo -e " L2tp IPSec Key: xjvpn13"
+ echo -e ""
+ echo -e ""
+ echo -e " OpenVPN Configs Download site"
+ echo -e " http://$IPADDR:$OvpnDownload_Port"
+ echo -e ""
+ echo -e " All OpenVPN Configs Archive"
+ echo -e " http://$IPADDR:$OvpnDownload_Port/Configs.zip"
+ echo -e ""
+ echo -e ""
+ echo -e " [Note] DO NOT RESELL THIS SCRIPT"
+
+ # Clearing all logs from installation
+ rm -rf /root/.bash_history && history -c && echo '' > /var/log/syslog
+
+rm -f ins*
+exit 1

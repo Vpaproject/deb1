@@ -18,6 +18,7 @@ function InstUpdates(){
  apt-get upgrade -y
  apt-get install nano wget curl zip unzip tar gzip p7zip-full bc rc openssl cron net-tools dnsutils dos2unix screen bzip2 ccrypt -y
  apt-get install nginx ruby apt-transport-https lsb-release squid screenfetch -y
+ apt-get install dropbear stunnel4 privoxy ca-certificates nginx ruby apt-transport-https lsb-release squid screenfetch -y
  gem install lolcat
  apt-get autoremove -y
 

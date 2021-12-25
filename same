@@ -398,7 +398,7 @@ $(cat /etc/openvpn/ta.key)
 </tls-auth>
 EOF16
 
-wget https://raw.githubusercontent.com/Vpaproject/deb1/master/iptables.sh && bash iptables.sh
+# wget https://raw.githubusercontent.com/Vpaproject/deb1/master/iptables.sh && bash iptables.sh
 
  # Setting template's correct name,IP address and nginx Port
  sed -i "s|MyScriptName|$MyScriptName|g" /var/www/openvpn/index.html

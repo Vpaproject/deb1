@@ -556,13 +556,6 @@ mySquid
 
 sed -i "s|SquidCacheHelper|$Privoxy_Port1|g" /etc/squid/squid.conf
 
-# Setting machine's IP Address inside of our Squid config(security that only allows this machine to use this proxy server)
-# sed -i "s|IP-ADDRESS|$IPADDR|g" /etc/squid/squid.conf
-# Setting squid ports
-# sed -i "s|Squid_Port1|$Squid_Port1|g" /etc/squid/squid.conf
-# sed -i "s|Squid_Port2|$Squid_Port2|g" /etc/squid/squid.conf
-# sed -i "s|Squid_Port3|$Squid_Port3|g" /etc/squid/squid.conf
-
 # Starting Proxy server
 echo -e "Restarting proxy server..."
 systemctl restart squid
@@ -587,6 +580,9 @@ myNginxC
  # Creating our root directory for all of our .ovpn configs
  rm -rf /var/www/openvpn
  mkdir -p /var/www/openvpn
+ # Setting machine's IP Address inside of our Squid config(security that only allows this machine to use this proxy server)
+sed -i "s|IP-ADDRESS|$IPADDR|g" /etc/openvpn/tcp.ovpn
+sed -i "s|IP-ADDRESS|$IPADDR|g" /var/www/openvpn/tcp.ovpn
 
 cat <<EOF152> /var/www/openvpn/tcp.ovpn
 # Credits to GakodX

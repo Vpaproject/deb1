@@ -8,7 +8,7 @@ Ohp_Port='7752'
 Squid_Port1='8000'
 Squid_Port2='3128'
 Squid_Port3='60000'
-OvpnDownload_Port='80'
+OvpnDownload_Port='85' 
 MyVPS_Time='Asia/Kuala_Lumpur'
 #############################
  apt-get update
@@ -543,8 +543,9 @@ sed -i "s|SquidCacheHelper|$Privoxy_Port1|g" /etc/squid/squid.conf
 echo -e "Restarting proxy server..."
 systemctl restart squid
 
+
  # Creating nginx config for our ovpn config downloads webserver
- cat <<'myNginxC' > /etc/nginx/conf.d/bonveio-ovpn-config.conf
+ cat <<'myNginxC' > /etc/nginx/conf.d/johnfordtv-ovpn-config.conf
 # My OpenVPN Config Download Directory
 server {
  listen 0.0.0.0:myNginx;
@@ -555,7 +556,7 @@ server {
 myNginxC
 
  # Setting our nginx config port for .ovpn download site
- sed -i "s|myNginx|$OvpnDownload_Port|g" /etc/nginx/conf.d/bonveio-ovpn-config.conf
+ sed -i "s|myNginx|$OvpnDownload_Port|g" /etc/nginx/conf.d/johnfordtv-ovpn-config.conf
 
  # Removing Default nginx page(port 80)
  rm -rf /etc/nginx/sites-*

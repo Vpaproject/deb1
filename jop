@@ -1,22 +1,5 @@
 #!/bin/bash
-myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | head -n1`;
-myint=`ifconfig | grep -B1 "inet addr:$IPADDR" | head -n1 | awk '{print $1}'`;
-if [ $USER != 'root' ]; then
-echo "Sorry, for run the script please using root user"
-exit 1
-fi
-if [[ "$EUID" -ne 0 ]]; then
-echo "Sorry, you need to run this as root"
-exit 2
-fi
-if [[ ! -e /dev/net/tun ]]; then
-echo "TUN is not available"
-exit 3
-fi
-echo "
-AUTOSCRIPT BY DISASTERMASTER
-PLEASE CANCEL ALL PACKAGE POPUP
-TAKE NOTE !!!"
+export DEBIAN_FRONTEND=noninteractive
 clear
 # OpenVPN Ports
 OpenVPN_Port1='1103'
@@ -580,17 +563,14 @@ myNginxC
  # Creating our root directory for all of our .ovpn configs
  rm -rf /var/www/openvpn
  mkdir -p /var/www/openvpn
- # Setting machine's IP Address inside of our Squid config(security that only allows this machine to use this proxy server)
-sed -i "s|IP-ADDRESS|$IPADDR|g" /etc/openvpn/tcp.ovpn
-sed -i "s|IP-ADDRESS|$IPADDR|g" /var/www/openvpn/tcp.ovpn
-
+ 
 cat <<EOF152> /var/www/openvpn/tcp.ovpn
 # Credits to GakodX
 client
 dev tun
 proto tcp
 remote $IPADDR $OpenVPN_Port1
-http-proxy $IPADDR $Squid_Port1
+http-proxy $MYIP $Squid_Port1
 resolv-retry infinite
 route-method exe
 resolv-retry infinite
@@ -809,9 +789,7 @@ cat <<'mySiteOvpn' > /var/www/openvpn/index.html
     </body>
 </html>
 mySiteOvpn
- 
- # Setting template's correct name,IP address and nginx Port
- sed -i "s|MyScriptName|$MyScriptName|g" /var/www/openvpn/index.html
+  # Setting template's correct name,IP address and nginx Port
  sed -i "s|NGINXPORT|$OvpnDownload_Port|g" /var/www/openvpn/index.html
  sed -i "s|IP-ADDRESS|$IPADDR|g" /var/www/openvpn/index.html
 

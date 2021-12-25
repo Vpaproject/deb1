@@ -1,4 +1,9 @@
 #!/bin/bash
+myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | head -n1`;
+myint=`ifconfig | grep -B1 "inet addr:$IPADDR" | head -n1 | awk '{print $1}'`;
+if [ $USER != 'root' ]; then
+echo "Sorry, for run the script please using root user"
+exit 1
 # OpenVPN Ports
 OpenVPN_Port1='1103'
 OpenVPN_Port2='25222'

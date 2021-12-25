@@ -1,5 +1,9 @@
 #!/bin/bash
-
+myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | head -n1`;
+myint=`ifconfig | grep -B1 "inet addr:$IPADDR" | head -n1 | awk '{print $1}'`;
+if [ $USER != 'root' ]; then
+echo "Sorry, for run the script please using root user"
+exit 1
 # OpenVPN Config Download Port
 OvpnDownload_Port='86' # Before changing this value, please read this document. It contains all unsafe ports for Google Chrome Browser, please read from line #23 to line #89: https://chromium.googlesource.com/chromium/src.git/+/refs/heads/master/net/base/port_util.cc
 
@@ -36,38 +40,7 @@ myNginxC
  rm -rf /var/www/openvpn
  mkdir -p /var/www/openvpn
 
- # Now creating all of our OpenVPN Configs 
-cat <<EOF152> /var/www/openvpn/GTMConfig.ovpn
-# Credits to XAMJYSS
 
-client
-dev tun
-proto tcp
-remote $IPADDR $OpenVPN_Port3
-remote-cert-tls server
-resolv-retry infinite
-nobind
-tun-mtu 1500
-tun-mtu-extra 32
-mssfix 1450
-persist-key
-persist-tun
-auth-user-pass
-auth none
-auth-nocache
-cipher none
-comp-lzo
-setenv CLIENT_CERT 0
-reneg-sec 0
-verb 1
-http-proxy $(curl -s http://ipinfo.io/ip || wget -q http://ipinfo.io/ip) $Privoxy_Port1
-http-proxy-option CUSTOM-HEADER Host redirect.googlevideo.com
-http-proxy-option CUSTOM-HEADER X-Forwarded-For redirect.googlevideo.com
-
-<ca>
-$(cat /etc/openvpn/ca.crt)
-</ca>
-EOF152
 
 
  # Creating OVPN download site index.html

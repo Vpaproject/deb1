@@ -87,7 +87,7 @@ cat <<'mySiteOvpn' > /var/www/openvpn/index.html
     <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.8.3/css/mdb.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     </head>
-    <body style="background-image: url('https://github.com/yakult13/parte/raw/main/curved8.jpg'); background-repeat: no-repeat; background-size: cover;">
+    <body style="background-image: url('https://gakod.com/images.png'); background-repeat: no-repeat; background-size: cover;">
         <div class="container justify-content-center>
             <div class="col-md">
                 <div class="view" style="margin-top:3em;margin-bottom:3em;">
@@ -103,13 +103,13 @@ cat <<'mySiteOvpn' > /var/www/openvpn/index.html
 
                             <li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Globe/TM <span class="badge light-blue darken-4">Android/iOS/PC/Modem</span><br /><small> For EZ/GS Promo with WNP,SNS,FB and IG freebies</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://MYDNS:86/GTMConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
 
-                            <li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Sun <span class="badge light-blue darken-4">Android/iOS/PC/Modem</span><br /><small> For TU Promos</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://MYDNS:86/SunConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
+                            <li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Sun <span class="badge light-blue darken-4">Android/iOS/PC/Modem</span><br /><small> For TU Promos</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="tcp.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
 
-                            <li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Sun <span class="badge light-blue darken-4">Modem</span><br /><small> Without Promo/Noload</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://MYDNS:86/SunNoloadConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
+                            <li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Sun <span class="badge light-blue darken-4">Modem</span><br /><small> Without Promo/Noload</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="udp.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
 
-                            <li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>OHPServer + TCP OVPN <span class="badge light-blue darken-4">Experimental</span><br /><small> Good for Payload Experiments and Bughost hunting(BETA)</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://MYDNS:86/OHPTCPConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
+                            <li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>OHPServer + TCP OVPN <span class="badge light-blue darken-4">Experimental</span><br /><small> Good for Payload Experiments and Bughost hunting(BETA)</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="ssl.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
                             
-                            <li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p> Sample UDP OVPN <span class="badge light-blue darken-4">Experimental</span><br /><small> More faster than TCP. Low latency, fast upload/download speed.</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://MYDNS:86/UDPConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
+                            <li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p> Sample UDP OVPN <span class="badge light-blue darken-4">Experimental</span><br /><small> More faster than TCP. Low latency, fast upload/download speed.</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="ohp.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
 
                         </ul>
                     </div>

@@ -1,0 +1,92 @@
+
+apt update
+apt upgrade
+apt install dropbear stunnel4 privoxy ca-certificates nginx ruby apt-transport-https lsb-release squid jq tcpdump dsniff grepcidr screenfetch -y
+
+
+cat <<'EOFnginx' > /etc/nginx/conf.d/bonveio-ovpn-config.conf
+# BonvScripts
+# https://t.me/BonvScripts
+# Please star my Repository: https://github.com/Bonveio/BonvScripts
+# https://phcorner.net/threads/739298
+#
+server {
+ listen 0.0.0.0:86;
+ server_name localhost;
+ root /var/www/openvpn;
+ index index.html;
+}
+EOFnginx
+
+rm -rf /etc/nginx/sites-*
+rm -rf /usr/share/nginx/html
+rm -rf /var/www/openvpn
+mkdir -p /var/www/openvpn
+
+echo -e "[\e[32mInfo\e[0m] Creating OpenVPN client configs.."
+
+cat <<'mySiteOvpn' > /var/www/openvpn/index.html
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Simple OVPN Download site by Bonveio Abitona -->
+
+<head><meta charset="utf-8" /><title>MyScriptName OVPN Config Download</title><meta name="description" content="MyScriptName Server" /><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" /><meta name="theme-color" content="#000000" /><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"><link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"><link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.8.3/css/mdb.min.css" rel="stylesheet"></head><body><div class="container justify-content-center" style="margin-top:9em;margin-bottom:5em;"><div class="col-md"><div class="view"><img src="https://openvpn.net/wp-content/uploads/openvpn.jpg" class="card-img-top"><div class="mask rgba-white-slight"></div></div><div class="card"><div class="card-body"><h5 class="card-title">Config List</h5><br /><ul class="list-group">
+
+<li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Globe/TM <span class="badge light-blue darken-4">Android/iOS/PC/Modem</span><br /><small> For EZ/GS Promo with WNP,SNS,FB and IG freebies</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://IP-ADDRESS:NGINXPORT/GTMConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
+
+<li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Sun <span class="badge light-blue darken-4">Android/iOS/PC/Modem</span><br /><small> For TU Promos</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://IP-ADDRESS:NGINXPORT/SunConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
+
+<li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>For Sun <span class="badge light-blue darken-4">Modem</span><br /><small> Without Promo/Noload</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://IP-ADDRESS:NGINXPORT/SunNoloadConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
+
+<li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p>OHPServer + TCP OVPN <span class="badge light-blue darken-4">Experimental</span><br /><small> Good for Payload Experiments and Bughost hunting(BETA)</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://IP-ADDRESS:NGINXPORT/OHPTCPConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li><li class="list-group-item justify-content-between align-items-center" style="margin-bottom:1em;"><p> Sample UDP OVPN <span class="badge light-blue darken-4">Experimental</span><br /><small> More faster than TCP. Low latency, fast upload/download speed.</small></p><a class="btn btn-outline-success waves-effect btn-sm" href="http://IP-ADDRESS:NGINXPORT/UDPConfig.ovpn" style="float:right;"><i class="fa fa-download"></i> Download</a></li>
+
+</ul></div></div></div></div></body></html>
+mySiteOvpn
+
+sed -i "s|MyScriptName|BonvScripts|g" /var/www/openvpn/index.html
+sed -i "s|NGINXPORT|86|g" /var/www/openvpn/index.html
+sed -i "s|IP-ADDRESS|$(ip_address)|g" /var/www/openvpn/index.html
+
+######
+cat <<"EOFgtm" > /var/www/openvpn/GTMConfig.ovpn
+# OpenVPN Server build vOPENVPN_SERVER_VERSION
+# Server Location: OPENVPN_SERVER_LOCATION
+# Server ISP: OPENVPN_SERVER_ISP
+# 
+
+client
+dev tun
+persist-tun
+proto tcp
+remote IP-ADDRESS 1194
+http-proxy IP-ADDRESS 8000
+persist-remote-ip
+resolv-retry infinite
+connect-retry 0 1
+remote-cert-tls server
+nobind
+reneg-sec 0
+keysize 0
+rcvbuf 0
+sndbuf 0
+verb 2
+comp-lzo
+auth none
+auth-nocache
+cipher none
+setenv CLIENT_CERT 0
+http-proxy-option VERSION 1.1
+http-proxy-option AGENT Chrome/80.0.3987.87
+http-proxy-option CUSTOM-HEADER Host redirect.googlevideo.com
+http-proxy-option CUSTOM-HEADER X-Forward-Host redirect.googlevideo.com
+http-proxy-option CUSTOM-HEADER X-Forwarded-For redirect.googlevideo.com
+http-proxy-option CUSTOM-HEADER Referrer redirect.googlevideo.com
+auth-user-pass
+EOFgtm
+
+
+sed -i "s|IP-ADDRESS|$(ip_address)|g" /var/www/openvpn/GTMConfig.ovpn
+echo -e "<ca>\n$(cat /etc/openvpn/ca.crt)\n</ca>" >> /var/www/openvpn/GTMConfig.ovpn
+
+

@@ -230,7 +230,7 @@ connect = 127.0.0.1:dropbear_port_c
 accept = Stunnel_Port2
 connect = 127.0.0.1:openssh_port_c
 
-[openssh]
+[openvpn]
 accept = 587
 connect = 127.0.0.1:1103
 MyStunnelC

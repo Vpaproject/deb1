@@ -800,18 +800,18 @@ $(cat /etc/openvpn/ta.key)
 EOF17
 
 # setting port ssh
-sed -i '/#Port 22/a Port 143' /etc/ssh/sshd_config
-sed -i '/#Port 22/a Port  90' /etc/ssh/sshd_config
+cd
+sed -i '/Port 22/a Port 143' /etc/ssh/sshd_config
 sed -i 's/#Port 22/Port  22/g' /etc/ssh/sshd_config
-/etc/init.d/ssh restart
-
+service ssh restart
 # install dropbear
 apt-get -y install dropbear
 sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
-sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=445/g' /etc/default/dropbear
-sed -i 's/DROPBEAR_EXTRA_ARGS=/DROPBEAR_EXTRA_ARGS="-p 800 -p 110 -p 80"/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=110/g' /etc/default/dropbear
+sed -i 's/DROPBEAR_EXTRA_ARGS=""/DROPBEAR_EXTRA_ARGS="-p 800 -p 960"/g' /etc/default/dropbear
 echo "/bin/false" >> /etc/shells
-/etc/init.d/dropbear restart
+echo "/usr/sbin/nologin" >> /etc/shells
+service ssh restart && service dropbear restart
 
 # install stunnel
 apt install stunnel4 -y
@@ -828,7 +828,7 @@ connect = 127.0.0.1:800
 
 [openssh]
 accept = 445
-connect = 127.0.0.1:22
+connect = 127.0.0.1:143
 
 [openvpn]
 accept = 587

@@ -71,40 +71,6 @@ verify-client-cert none
 username-as-common-name
 END
 
-cat > /etc/openvpn/server-tcp-1101.conf <<-END
-port 1101
-proto tcp
-dev tun
-dev-type tun
-sndbuf 100000
-rcvbuf 100000
-ca ca.crt
-cert lostserver.crt
-key lostserver.key
-dh dh2048.pem
-tls-auth ta.key 0
-topology subnet
-server 10.9.0.0 255.255.255.0
-ifconfig-pool-persist ipp.txt
-push "redirect-gateway def1 bypass-dhcp"
-push "dhcp-option DNS 8.8.8.8"
-push "dhcp-option DNS 8.8.4.4"
-keepalive 10 120
-cipher AES-256-CBC
-auth SHA256
-comp-lzo
-user nobody
-group nogroup
-persist-tun
-status openvpn-status.log
-verb 2
-mute 3
-plugin /usr/lib/openvpn/openvpn-plugin-auth-pam.so login
-verify-client-cert none
-username-as-common-name
-END
-
-
 # Buat config server UDP 2500
 cat > /etc/openvpn/server-udp-2500.conf <<-END
 port 25222

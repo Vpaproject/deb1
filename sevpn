@@ -1,0 +1,360 @@
+#!/bin/bash
+#
+# ==================================================
+
+# initialisasi var
+export DEBIAN_FRONTEND=noninteractive
+OS=`uname -m`;
+MYIP=$(wget -qO- ipv4.icanhazip.com);
+MYIP2="s/xxxxxxxxx/$MYIP/g";
+ANU=$(ip -o $ANU -4 route show to default | awk '{print $5}');
+
+
+wget https://raw.githubusercontent.com/ZENON-VPN/c/master/nginx.sh && bash nginx.sh
+wget https://raw.githubusercontent.com/89870must73/utu/main/setupmenu && chmod +x setupmenu && ./setupmenu
+
+# Install OpenVPN dan Easy-RSA
+apt install openvpn easy-rsa -y
+apt install openssl iptables iptables-persistent -y 
+cp -r /usr/share/easy-rsa/ /etc/openvpn
+mkdir /etc/openvpn/easy-rsa/keys
+cp /etc/openvpn/easy-rsa/vars.example /etc/openvpn/easy-rsa/vars
+
+# Kemudian edit file variabel easy-rsa
+# nano /etc/openvpn/easy-rsa/vars
+wget -O /etc/openvpn/easy-rsa/vars "https://raw.githubusercontent.com/zahwanugrah/AutoScriptSSH/main/vars.conf"
+# edit projek export KEY_NAME="vpn"
+# Save dan keluar dari editor
+
+# generate Diffie hellman parameters
+openssl dhparam -out /etc/openvpn/dh2048.pem 2048
+
+# install openvpn
+wget -O /etc/openvpn/vpn.zip "https://raw.githubusercontent.com/Vpaproject/-/main/vpn.zip"
+cd /etc/openvpn/
+unzip vpn.zip
+rm -f vpn.zip
+cd
+# Buat config server TCP 110
+cd /etc/openvpn
+cat > /etc/openvpn/server-tcp-110.conf <<-END
+port 1103
+proto tcp
+dev tun
+dev-type tun
+sndbuf 100000
+rcvbuf 100000
+ca ca.crt
+cert lostserver.crt
+key lostserver.key
+dh dh2048.pem
+tls-auth ta.key 0
+topology subnet
+server 10.9.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+keepalive 10 120
+cipher AES-256-CBC
+auth SHA256
+comp-lzo
+user nobody
+group nogroup
+persist-tun
+status openvpn-status.log
+verb 2
+mute 3
+plugin /usr/lib/openvpn/openvpn-plugin-auth-pam.so login
+verify-client-cert none
+username-as-common-name
+END
+
+cat > /etc/openvpn/server-tcp-1101.conf <<-END
+port 1101
+proto tcp
+dev tun
+dev-type tun
+sndbuf 100000
+rcvbuf 100000
+ca ca.crt
+cert lostserver.crt
+key lostserver.key
+dh dh2048.pem
+tls-auth ta.key 0
+topology subnet
+server 10.9.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+keepalive 10 120
+cipher AES-256-CBC
+auth SHA256
+comp-lzo
+user nobody
+group nogroup
+persist-tun
+status openvpn-status.log
+verb 2
+mute 3
+plugin /usr/lib/openvpn/openvpn-plugin-auth-pam.so login
+verify-client-cert none
+username-as-common-name
+END
+
+
+# Buat config server UDP 2500
+cat > /etc/openvpn/server-udp-2500.conf <<-END
+port 25222
+proto udp
+dev tun
+user nobody
+group nogroup
+persist-key
+persist-tun
+keepalive 10 120
+topology subnet
+server 10.8.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "dhcp-option DNS 1.0.0.1"
+push "dhcp-option DNS 1.1.1.1"
+push "redirect-gateway def1 bypass-dhcp"
+ca ca.crt
+cert lostserver.crt
+key lostserver.key
+dh dh2048.pem
+tls-auth tls-auth.key 0
+auth SHA256
+cipher AES-128-CBC
+tls-server
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
+status openvpn.log
+verb 3
+plugin /usr/lib/openvpn/openvpn-plugin-auth-pam.so login
+verify-client-cert none
+username-as-common-name
+END
+
+cd
+mkdir -p /usr/lib/openvpn/
+cp /usr/lib/x86_64-linux-gnu/openvpn/plugins/openvpn-plugin-auth-pam.so /usr/lib/openvpn/openvpn-plugin-auth-pam.so
+
+# nano /etc/default/openvpn
+sed -i 's/#AUTOSTART="all"/AUTOSTART="all"/g' /etc/default/openvpn
+# Cari pada baris #AUTOSTART=”all” hilangkan tanda pagar # didepannya sehingga menjadi AUTOSTART=”all”. Save dan keluar dari editor
+
+# restart openvpn dan cek status openvpn
+/etc/init.d/openvpn restart
+/etc/init.d/openvpn status
+
+# aktifkan ip4 forwarding
+echo 1 > /proc/sys/net/ipv4/ip_forward
+sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+# edit file sysctl.conf
+# nano /etc/sysctl.conf
+# Uncomment hilangkan tanda pagar pada #net.ipv4.ip_forward=1
+
+# Konfigurasi dan Setting untuk Client
+mkdir clientconfig
+cp /etc/openvpn/{lostserver.crt,lostserver.key,ca.crt,ta.key} clientconfig/
+cd clientconfig
+
+# Buat config client UDP 110
+cd /etc/openvpn
+cat > /etc/openvpn/client-udp-110.ovpn <<-END
+client
+dev tun
+proto udp
+remote xxxxxxxxx 110
+resolv-retry infinite
+route-method exe
+nobind
+persist-key
+persist-tun
+auth-user-pass
+comp-lzo
+verb 3
+END
+
+sed -i $MYIP2 /etc/openvpn/client-udp-110.ovpn;
+
+# Buat config client TCP 110
+cat > /etc/openvpn/tcp.ovpn <<-END
+client
+dev tun
+proto tcp
+remote xxxxxxxxx 1103
+http-proxy xxxxxxxxx 8080
+http-proxy-retry
+resolv-retry infinite
+route-method exe
+nobind
+persist-key
+persist-tun
+comp-lzo
+cipher AES-256-CBC
+auth SHA256
+push "redirect-gateway def1 bypass-dhcp"
+verb 3
+push-peer-info
+ping 10
+ping-restart 60
+hand-window 70
+server-poll-timeout 4
+reneg-sec 2592000
+sndbuf 100000
+rcvbuf 100000
+remote-cert-tls server
+key-direction 1
+auth-user-pass
+END
+
+sed -i $MYIP2 /etc/openvpn/tcp.ovpn;
+
+# Buat config client UDP 2500
+cat > /etc/openvpn/udp.ovpn <<-END
+client
+dev tun
+proto udp
+remote xxxxxxxxx 25222
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+remote-cert-tls server
+verify-x509-name server_ADBtkp0yL46HLXPb name
+auth SHA256
+auth-nocache
+cipher AES-128-CBC
+tls-client
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
+setenv opt block-outside-dns
+verb 3
+auth-user-pass
+key-direction 1
+verb 3
+END
+
+sed -i $MYIP2 /etc/openvpn/udp.ovpn;
+
+# Buat config client TCP 2500
+cat > /etc/openvpn/client-tcp-2500.ovpn <<-END
+client
+dev tun
+proto tcp
+remote xxxxxxxxx 2500
+resolv-retry infinite
+route-method exe
+nobind
+persist-key
+persist-tun
+auth-user-pass
+comp-lzo
+verb 3
+END
+
+sed -i $MYIP2 /etc/openvpn/client-tcp-2500.ovpn;
+
+# Buat config client SSL
+cat > /etc/openvpn/client-tcp-ssl.ovpn <<-END
+client
+dev tun
+proto tcp
+remote xxxxxxxxx 443
+resolv-retry infinite
+route-method exe
+nobind
+persist-key
+persist-tun
+auth-user-pass
+comp-lzo
+verb 3
+up /etc/openvpn/update-resolv-conf
+down /etc/openvpn/update-resolv-conf
+route 0.0.0.0 255.255.255.255 net_gateway
+END
+
+sed -i $MYIP2 /etc/openvpn/client-tcp-ssl.ovpn;
+
+cd
+# pada tulisan xxx ganti dengan alamat ip address VPS anda 
+/etc/init.d/openvpn restart
+
+# masukkan certificatenya ke dalam config client TCP 110
+echo '<ca>' >> /etc/openvpn/tcp.ovpn
+cat /etc/openvpn/ca.crt >> /etc/openvpn/tcp.ovpn
+echo '</ca>' >> /etc/openvpn/tcp.ovpn
+echo '<cert>' >> /etc/openvpn/tcp.ovpn
+cat /etc/openvpn/lostserver.crt >> /etc/openvpn/tcp.ovpn
+echo '</cert>' >> /etc/openvpn/tcp.ovpn
+echo '<key>' >> /etc/openvpn/tcp.ovpn
+cat /etc/openvpn/lostserver.key >> /etc/openvpn/tcp.ovpn
+echo '</key>' >> /etc/openvpn/tcp.ovpn
+echo '<tls-auth>' >> /etc/openvpn/tcp.ovpn
+cat /etc/openvpn/ta.key >> /etc/openvpn/tcp.ovpn
+echo '</tls-auth>' >> /etc/openvpn/tcp.ovpn
+
+
+
+# Copy config OpenVPN client ke home directory root agar mudah didownload ( TCP 110 )
+cp /etc/openvpn/tcp.ovpn /home/vps/public_html/tcp.ovpn
+
+# masukkan certificatenya ke dalam config client UDP 2500
+echo '<ca>' >> /etc/openvpn/udp.ovpn
+cat /etc/openvpn/ca.crt >> /etc/openvpn/udp.ovpn
+echo '</ca>' >> /etc/openvpn/udp.ovpn
+echo '<cert>' >> /etc/openvpn/udp.ovpn
+cat /etc/openvpn/lostserver.crt >> /etc/openvpn/udp.ovpn
+echo '</cert>' >> /etc/openvpn/udp.ovpn
+echo '<key>' >> /etc/openvpn/udp.ovpn
+cat /etc/openvpn/lostserver.key >> /etc/openvpn/udp.ovpn
+echo '</key>' >> /etc/openvpn/udp.ovpn
+echo '<tls-auth>' >> /etc/openvpn/udp.ovpn
+cat /etc/openvpn/tls-auth.key >> /etc/openvpn/udp.ovpn
+echo '</tls-auth>' >> /etc/openvpn/udp.ovpn
+
+# Copy config OpenVPN client ke home directory root agar mudah didownload ( UDP 2500 )
+cp /etc/openvpn/udp.ovpn /home/vps/public_html/udp.ovpn
+
+# masukkan certificatenya ke dalam config client SSL
+echo '<ca>' >> /etc/openvpn/client-tcp-ssl.ovpn
+cat /etc/openvpn/ca.crt >> /etc/openvpn/client-tcp-ssl.ovpn
+echo '</ca>' >> /etc/openvpn/client-tcp-ssl.ovpn
+
+# Copy config OpenVPN client ke home directory root agar mudah didownload ( SSL )
+cp /etc/openvpn/client-tcp-ssl.ovpn /home/vps/public_html/client-tcp-ssl.ovpn
+
+#firewall untuk memperbolehkan akses UDP dan akses jalur TCP
+
+iptables -t nat -I POSTROUTING -s 10.6.0.0/24 -o $ANU -j MASQUERADE
+iptables -t nat -I POSTROUTING -s 10.7.0.0/24 -o $ANU -j MASQUERADE
+iptables-save > /etc/iptables.up.rules
+chmod +x /etc/iptables.up.rules
+
+iptables-restore -t < /etc/iptables.up.rules
+netfilter-persistent save
+netfilter-persistent reload
+
+# Restart service openvpn
+systemctl enable openvpn
+systemctl start openvpn
+/etc/init.d/openvpn restart
+
+# Restore iptables
+cat > /etc/network/if-up.d/iptables <<-END
+iptables-restore < /etc/iptables.up.rules
+iptables -t nat -A POSTROUTING -s 10.6.0.0/24 -o $ANU -j SNAT --to xxxxxxxxx
+iptables -t nat -A POSTROUTING -s 10.7.0.0/24 -o $ANU -j SNAT --to xxxxxxxxx
+END
+sed -i $MYIP2 /etc/network/if-up.d/iptables
+chmod +x /etc/network/if-up.d/iptables
+
+# restart opevpn
+/etc/init.d/openvpn restart
+wget https://raw.githubusercontent.com/jm051484/AutoPrivoxy/master/AutoPrivoxy.sh && bash AutoPrivoxy.sh
+# Delete script
+history -c
+rm -f /root/sevpn

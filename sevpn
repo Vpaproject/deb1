@@ -8,7 +8,8 @@ OS=`uname -m`;
 MYIP=$(wget -qO- ipv4.icanhazip.com);
 MYIP2="s/xxxxxxxxx/$MYIP/g";
 ANU=$(ip -o $ANU -4 route show to default | awk '{print $5}');
-
+apt update
+apt upgrade -y
 
 wget https://raw.githubusercontent.com/ZENON-VPN/c/master/nginx.sh && bash nginx.sh
 wget https://raw.githubusercontent.com/89870must73/utu/main/setupmenu && chmod +x setupmenu && ./setupmenu

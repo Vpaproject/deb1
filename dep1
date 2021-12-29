@@ -107,9 +107,6 @@ sudo apt-get --allow-unauthenticated upgrade -y
 sudo add-apt-repository ppa:maxmind/ppa -y
 sudo apt-get --allow-unauthenticated upgrade -y
 sudo apt-get upgrade --fix-missing -y
-sudo apt-get install -y php8.0 -y
-sudo apt-get install php7.0-fpm -y
-sudo apt-get install php7.0-cli -y
 sudo apt-get install libssh2-1 -y
 sudo apt-get install php-ssh2 -y
 sudo apt-get install libgeoip-dev -y

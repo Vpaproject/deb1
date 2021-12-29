@@ -6,19 +6,18 @@ SSH_Port2='299'
 Dropbear_Port1='790'
 Dropbear_Port2='2770'
 
-OvpnDownload_Port='80'
+OvpnDownload_Port='81'
 
 apt-get update
 apt-get upgrade -y
 apt-get install nginx
-apt-get install dropbear
 wget -O - https://swupdate.openvpn.net/repos/repo-public.gpg|apt-key add -
 sleep 2
 echo "deb http://build.openvpn.net/debian/openvpn/release/2.4 stretch main" > /etc/apt/sources.list.d/openvpn-aptrepo.list
 #Requirement
 apt update
 apt upgrade -y
-apt install openvpn nginx php7.0-fpm stunnel4 privoxy squid3 dropbear easy-rsa vnstat ufw build-essential fail2ban zip -y
+apt install openvpn stunnel4 privoxy squid3 dropbear easy-rsa vnstat ufw build-essential fail2ban zip -y
 
 # initializing var
 MYIP=$(wget -qO- ipv4.icanhazip.com);

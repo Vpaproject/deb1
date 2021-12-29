@@ -142,7 +142,7 @@ chmod +x /etc/openvpn/ca.crt
 # Setting Server
 tar -xzvf /root/plugin.tgz -C /usr/lib/openvpn/
 chmod +x /usr/lib/openvpn/*
-cat > /etc/openvpn/server.conf <<-END
+cat > /etc/openvpn/server_tcp.conf <<-END10
 port 1103
 proto tcp
 dev tun
@@ -173,7 +173,40 @@ mute 3
 verify-client-cert none
 username-as-common-name
 plugin /usr/lib/openvpn/plugins/openvpn-plugin-auth-pam.so login
-END
+END10
+
+cat > /etc/openvpn/server_udp.conf <<-END20
+port 25222
+proto udp
+dev tun
+user nobody
+group nogroup
+persist-key
+persist-tun
+keepalive 10 120
+topology subnet
+server 10.8.0.0 255.255.255.0
+ifconfig-pool-persist ipp.txt
+push "dhcp-option DNS 1.0.0.1"
+push "dhcp-option DNS 1.1.1.1"
+push "redirect-gateway def1 bypass-dhcp"
+ca ca.crt
+cert server.crt
+key server.key
+dh dh2048.pem
+tls-auth tls-auth.key 0
+auth SHA256
+cipher AES-128-CBC
+tls-server
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
+status openvpn.log
+verb 3
+verify-client-cert none
+username-as-common-name
+plugin /usr/lib/openvpn/plugins/openvpn-plugin-auth-pam.so login
+END20
+
 systemctl start openvpn@server
 #Create OpenVPN Config
 mkdir -p /home/vps/public_html
@@ -225,32 +258,30 @@ $(cat /etc/openvpn/ta.key)
 </tls-auth>
 EOF1
 
-cat > /etc/openvpn/client.ovpn << EOF2
+cat > /etc/openvpn/client.ovpn << EOF3
 # Gakod Script
 # By: Gakod
 auth-user-pass
 client
 dev tun
-proto tcp-client
-remote $MYIP 443
+proto udp
+remote $MYIP 25222
+resolv-retry infinite
+nobind
 persist-key
 persist-tun
-comp-lzo
-bind
-float
 remote-cert-tls server
+verify-x509-name server_ADBtkp0yL46HLXPb name
+auth SHA256
+auth-nocache
+cipher AES-128-CBC
+tls-client
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
+setenv opt block-outside-dns
 verb 3
 auth-user-pass
-redirect-gateway def1
-cipher none
-auth none
-auth-nocache
-auth-retry interact
-connect-retry 0 1
-nice -20
-reneg-sec 0
-dhcp-option DNS 1.1.1.1
-dhcp-option DNS 1.0.0.1
+key-direction 1
 <auth-user-pass>
 sam
 sam
@@ -265,15 +296,15 @@ $(cat /etc/openvpn/server.crt)
 $(cat /etc/openvpn/server.key)
 </key>
 <tls-auth>
-$(cat /etc/openvpn/ta.key)
+$(cat /etc/openvpn/tls-auth.key)
 </tls-auth>
-EOF2
+EOF3
 
 client = yes
 debug = 6
 
 [openvpn]
-accept = 127.0.0.1:443
+accept = 127.0.0.1:1103
 connect = $MYIP:587
 TIMEOUTclose = 0
 verify = 0
@@ -293,7 +324,7 @@ client = no
 
 [openvpn]
 accept = 587
-connect = 127.0.0.1:443
+connect = 127.0.0.1:1103
 cert = /etc/stunnel/stunnel.pem
 
 [dropbear]
@@ -310,7 +341,7 @@ END
 
 #Setting UFW
 ufw allow ssh
-ufw allow 443/tcp
+ufw allow 1103/tcp
 sed -i 's|DEFAULT_INPUT_POLICY="DROP"|DEFAULT_INPUT_POLICY="ACCEPT"|' /etc/default/ufw
 sed -i 's|DEFAULT_FORWARD_POLICY="DROP"|DEFAULT_FORWARD_POLICY="ACCEPT"|' /etc/default/ufw
 

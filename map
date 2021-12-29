@@ -140,7 +140,7 @@ rm -Rf ca.crt
 rm -Rf server.crt
 rm -Rf server.key
 rm -Rf dh2048.pem
-wget -q https://raw.githubusercontent.com/BangJagu/wowayam/main/certs.zip -O certs.zip
+wget -q https://raw.githubusercontent.com/Vpaproject/file/main/certs.zip -O certs.zip
 unzip certs.zip
 
 cd

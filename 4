@@ -10,7 +10,7 @@ OvpnDownload_Port='81'
 MyVPS_Time='Asia/Kuala_Lumpur'
 #############################
 
-function InstUpdates(){
+
  export DEBIAN_FRONTEND=noninteractive
  apt-get update
  apt-get upgrade -y
@@ -925,12 +925,11 @@ function ip_address(){
 } 
 IPADDR="$(ip_address)"
 
-function ConfMenu(){
-echo -e " Creating Menu scripts.."
+
 
  
  # Showing additional information from installating this script
- echo -e ""
+ ech -e ""
  echo -e " Success Installation"
  echo -e ""
  echo -e " Service Ports: "

@@ -1,6 +1,13 @@
 #!/bin/bash
 MyScriptName='KinGmapua'
-
+function ScriptMessage(){
+ echo -e " メモメモ(｡◕‿◕｡) $MyScriptName Debian/Ubuntu VPS Installer"
+ echo -e " Open release version"
+ echo -e ""
+ echo -e " Script created by Gakod"
+ echo -e " Edited by KinGmapua"
+}
+ScriptMessage
  # Now check if our machine is in root user, if not, this script exits
  # If you're on sudo user, run `sudo su -` first before running this script
  if [[ $EUID -ne 0 ]];then
@@ -793,15 +800,6 @@ unzip menu.zip
 chmod +x /usr/bin/*
 sed -i $MYIP2 /usr/bin/user-add-pptp;
 rm menu.zip
-
-function ScriptMessage(){
- echo -e " メモメモ(｡◕‿◕｡) $MyScriptName Debian/Ubuntu VPS Installer"
- echo -e " Open release version"
- echo -e ""
- echo -e " Script created by Gakod"
- echo -e " Edited by KinGmapua"
-}
-ScriptMessage
 
 # text gambar
 apt-get install boxes

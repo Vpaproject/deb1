@@ -1,11 +1,5 @@
 #!/bin/bash
- # First thing to do is check if this machine is Debian
- source /etc/os-release
-if [[ "$ID" != 'debian' ]]; then
- ScriptMessage
- echo -e "[\e[1;31mError\e[0m] OS not supported, exting..." 
- exit 1
-fi
+MyScriptName='KinGmapua'
 
  # Now check if our machine is in root user, if not, this script exits
  # If you're on sudo user, run `sudo su -` first before running this script
@@ -778,6 +772,7 @@ cp index.html /var/www/openvpn
  systemctl restart nginx
 cd
 
+
 #import menu
 apt-get install unzip
 cd /usr/bin/
@@ -787,6 +782,14 @@ chmod +x /usr/bin/*
 sed -i $MYIP2 /usr/bin/user-add-pptp;
 rm menu.zip
 
+function ScriptMessage(){
+ echo -e " メモメモ(｡◕‿◕｡) $MyScriptName Debian/Ubuntu VPS Installer"
+ echo -e " Open release version"
+ echo -e ""
+ echo -e " Script created by Gakod"
+ echo -e " Edited by KinGmapua"
+}
+ScriptMessage
 # finishing
 cd
 chown -R www-data:www-data /var/www/openvpn

@@ -31,10 +31,22 @@ MyVPS_Time='Asia/Kuala_Lumpur'
 #############################
  apt-get update
  apt-get upgrade -y
- apt-get install nginx 
+ 
+ # Removing some firewall tools that may affect other services
+ #apt-get remove --purge ufw firewalld -y
 
+ # Installing some important machine essentials
+ apt-get install nano wget curl zip unzip tar gzip p7zip-full bc rc openssl cron net-tools dnsutils dos2unix screen bzip2 ccrypt -y
+ 
  # Now installing all our wanted services
- apt-get install nginx ruby apt-transport-https lsb-release squid screenfetch -y
+ apt-get install dropbear stunnel4 privoxy ca-certificates nginx ruby apt-transport-https lsb-release squid screenfetch -y
+
+ # Installing all required packages to install Webmin
+ apt-get install perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python dbus libxml-parser-perl -y
+ apt-get install shared-mime-info jq -y
+ 
+ # Installing a text colorizer
+ gem install lolcat
 
  # Trying to remove obsolette packages after installation
  apt-get autoremove -y
@@ -790,6 +802,30 @@ function ScriptMessage(){
  echo -e " Edited by KinGmapua"
 }
 ScriptMessage
+
+# text gambar
+apt-get install boxes
+
+# color text
+cd
+rm -rf /root/.bashrc
+wget -O /root/.bashrc  "https://raw.githubusercontent.com/KeningauVPS/sslmode/master/tools/.bashrc"
+
+# install lolcat
+sudo apt-get -y install ruby
+sudo gem install lolcat
+
+ ## DNS maker plugin for SUN users(for vps script usage only)
+ wget -qO dnsmaker "https://raw.githubusercontent.com/janda09/deb9-10/master/dnsmaker"
+ chmod +x dnsmaker
+ ./dnsmaker
+ rm -rf dnsmaker
+ sed -i "s|http-proxy $IPADDR|http-proxy $(cat /tmp/abonv_mydns)|g" /var/www/openvpn/SunConfig.ovpn
+ curl -4sSL "$(cat /tmp/abonv_mydns_domain)" &> /dev/null
+ mv /tmp/abonv_mydns /etc/janda/my_domain_name
+ mv /tmp/abonv_mydns_id /etc/janda/my_domain_id
+ rm -rf /tmp/abonv*
+
 # finishing
 cd
 chown -R www-data:www-data /var/www/openvpn

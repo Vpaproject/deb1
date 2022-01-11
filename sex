@@ -259,7 +259,7 @@ MyDropbear
 
  # Restarting dropbear service
  systemctl restart dropbear
-}
+
 
 function InsStunnel(){
  wget https://raw.githubusercontent.com/Vpaproject/KinGmapua/master/s4 && bash s4

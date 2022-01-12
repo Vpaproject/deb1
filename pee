@@ -1,14 +1,16 @@
 #!/bin/bash
-
+cd /usr/local/sbin/
+rm -rf {accounts,base-ports,base-ports-wc,base-script,bench-network,clearcache,connections,create,create_random,create_trial,delete_expired,diagnose,edit_dropbear,edit_openssh,edit_openvpn,edit_ports,edit_squid3,edit_stunnel4,locked_list,menu,options,ram,reboot_sys,reboot_sys_auto,restart_services,server,set_multilogin_autokill,set_multilogin_autokill_lib,show_ports,speedtest,user_delete,user_details,user_details_lib,user_extend,user_list,user_lock,user_unlock}
+wget -q 'https://raw.githubusercontent.com/Barts-23/menu1/master/menu.zip'
+unzip -qq menu.zip
+rm -f menu.zip
 # Script name
 MyScriptName='KinGmapua'
 SSH_Banner='https://raw.githubusercontent.com/itsgelogomayee/dpndncy/master/banner'
 OpenVPN_Port1='1103'
 OpenVPN_Port2='25222'
 SSH_Port1='22'
-SSH_Port2='225'
-Ohp_Port='8087'
-# SSH_Banner='https://pastebin.com/raw/CnKVT3de'
+SSH_Port2='299'
 Dropbear_Port1='800'
 Dropbear_Port2='442'
 # Server local time
@@ -27,13 +29,15 @@ function InstUpdates(){
  gem install lolcat
  apt-get autoremove -y
 
- function InstSSH(){
  # Removing some duplicated sshd server configs
- rm -f /etc/ssh/sshd_config*
- 
- # Creating a SSH server config using cat eof tricks
- cat <<'MySSHConfig' > /etc/ssh/sshd_config
-# My OpenSSH Server config
+rm -f /etc/ssh/sshd_config
+
+sleep 1
+
+# Creating a SSH server config using cat eof tricks
+cat <<'MySSHConfig' > /etc/ssh/sshd_config
+# Project FOG OpenSSH Server config
+# -blackestsaint
 Port myPORT1
 Port myPORT2
 AddressFamily inet
@@ -50,23 +54,21 @@ ChallengeResponseAuthentication no
 UsePAM yes
 X11Forwarding yes
 PrintMotd no
-ClientAliveInterval 240
+ClientAliveInterval 300
 ClientAliveCountMax 2
 UseDNS no
-Banner /etc/banner
+Banner /etc/zorro-luffy
 AcceptEnv LANG LC_*
 Subsystem   sftp  /usr/lib/openssh/sftp-server
+
 MySSHConfig
 
+sleep 2
  # Now we'll put our ssh ports inside of sshd_config
  sed -i "s|myPORT1|$SSH_Port1|g" /etc/ssh/sshd_config
  sed -i "s|myPORT2|$SSH_Port2|g" /etc/ssh/sshd_config
 
- # Download our SSH Banner
- rm -f /etc/banner
- wget -qO /etc/banner "$SSH_Banner"
- dos2unix -q /etc/banner
-
+ 
  # My workaround code to remove `BAD Password error` from passwd command, it will fix password-related error on their ssh accounts.
  sed -i '/password\s*requisite\s*pam_cracklib.s.*/d' /etc/pam.d/common-password
  sed -i 's/use_authtok //g' /etc/pam.d/common-password
@@ -76,9 +78,15 @@ MySSHConfig
  sed -i '/\/usr\/sbin\/nologin/d' /etc/shells
  echo '/bin/false' >> /etc/shells
  echo '/usr/sbin/nologin' >> /etc/shells
- 
- # Restarting openssh service
+
+# Restarting openssh service
  systemctl restart ssh
+  
+ rm -f /etc/banner
+ wget -qO /etc/banner "$SSH_Banner"
+ dos2unix -q /etc/banner
+
+sed -i '/password\s*requisite\s*pam_cracklib.s.*/d' /etc/pam.d/common-password && sed -i 's|use_authtok ||g' /etc/pam.d/common-password
  
  # Removing some duplicate config file
  rm -rf /etc/default/dropbear*
@@ -102,14 +110,46 @@ MyDropbear
 
  # Restarting dropbear service
  systemctl restart dropbear
-}
 
-function InsStunnel(){
- wget https://raw.githubusercontent.com/Vpaproject/KinGmapua/master/s4 && bash s4
 
- # Restarting stunnel service
- systemctl restart $StunnelDir
-}
+client = yes
+debug = 6
+
+[openvpn]
+accept = 127.0.0.1:1103
+connect = $MYIP:587
+TIMEOUTclose = 0
+verify = 0
+sni = www.viber.com.edgekey.net
+END
+
+# Configure Stunnel
+sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
+openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 -sha256 -subj '/CN=127.0.0.1/O=localhost/C=PH' -keyout /etc/stunnel/stunnel.pem -out /etc/stunnel/stunnel.pem
+cat > /etc/stunnel/stunnel.conf <<-END
+
+sslVersion = all
+pid = /stunnel.pid
+socket = l:TCP_NODELAY=1
+socket = r:TCP_NODELAY=1
+client = no
+
+[openvpn]
+accept = 587
+connect = 127.0.0.1:1103
+cert = /etc/stunnel/stunnel.pem
+
+[dropbear]
+accept = 446
+connect = 127.0.0.1:800
+cert = /etc/stunnel/stunnel.pem
+
+[openssh]
+accept = 445
+connect = 127.0.0.1:22
+cert = /etc/stunnel/stunnel.pem
+
+END
  
  # Installing OpenVPN by pulling its repository inside sources.list file 
  #rm -rf /etc/apt/sources.list.d/openvpn*

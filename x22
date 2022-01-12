@@ -1,95 +1,30 @@
 #!/bin/bash
-function ip_address(){
-  local IP="$( ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\.|^0\." | head -n 1 )"
-  [ -z "${IP}" ] && IP="$( wget -qO- -t1 -T2 ipv4.icanhazip.com )"
-  [ -z "${IP}" ] && IP="$( wget -qO- -t1 -T2 ipinfo.io/ip )"
-  [ ! -z "${IP}" ] && echo "${IP}" || echo
-}
-ip_address
-IPADDR="$(ip_address)"
-apt-get update && apt-get update
-# MULA SETUP
-myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | head -n1`;
-myint=`ifconfig | grep -B1 "inet addr:$myip" | head -n1 | awk '{print $1}'`;
-if [ $USER != 'root' ]; then
-echo "Sorry, for run the script please using root user"
-exit 1
-fi
-if [[ "$EUID" -ne 0 ]]; then
-echo "Sorry, you need to run this as root"
-exit 2
-fi
-if [[ ! -e /dev/net/tun ]]; then
-echo "TUN is not available"
-exit 3
-fi
-echo "
-AUTOSCRIPT BY OrangKuatSabahanTerkini
-AMBIL PERHATIAN !!!"
-clear
 
-echo "START AUTOSCRIPT"
-clear
-echo "SET TIMEZONE KUALA LUMPUT GMT +8"
-ln -fs /usr/share/zoneinfo/Asia/Kuala_Lumpur /etc/localtime;
-clear
-echo "
-ENABLE IPV4 AND IPV6
-COMPLETE 1%
-"
-echo ipv4 >> /etc/modules
-echo ipv6 >> /etc/modules
-sysctl -w net.ipv4.ip_forward=1
-sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
-sed -i 's/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g' /etc/sysctl.conf
-sysctl -p
-clear
-
-echo "
-REMOVE SPAM PACKAGE
-COMPLETE 10%
-"
-apt-get -y --purge remove samba*;
-apt-get -y --purge remove apache2*;
-apt-get -y --purge remove sendmail*;
-apt-get -y --purge remove postfix*;
-apt-get -y --purge remove bind*;
-clear
-echo "
-UPDATE AND UPGRADE PROCESS 
-PLEASE WAIT TAKE TIME 1-5 MINUTE
-"
-sh -c 'echo "deb http://download.webmin.com/download/repository sarge contrib" > /etc/apt/sources.list.d/webmin.list'
-wget -qO - http://www.webmin.com/jcameron-key.asc | apt-key add -
-apt-get update;
-apt-get -y upgrade;
-apt-get -y install wget curl;
-echo "
-INSTALLER PROCESS PLEASE WAIT
-TAKE TIME 5-10 MINUTE
-"
+# Script name
+MyScriptName='KinGmapua'
+SSH_Banner='https://raw.githubusercontent.com/itsgelogomayee/dpndncy/master/banner'
 OpenVPN_Port1='1103'
 OpenVPN_Port2='25222'
-SSH_Banner='https://raw.githubusercontent.com/itsgelogomayee/dpndncy/master/banner'
 SSH_Port1='22'
 SSH_Port2='299'
 Dropbear_Port1='800'
 Dropbear_Port2='2770'
+# Server local time
+MyVPS_Time='Asia/Kuala_Lumpur'
+#############################
 
-# text gambar
-apt-get install boxes
-# color text
-cd
-rm -rf /root/.bashrc
-wget -O /root/.bashrc "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/.bashrc"
-# install lolcat
-sudo apt-get -y install ruby
-sudo gem install lolcat
-# fail2ban & exim & protection
-apt-get -y install fail2ban sysv-rc-conf dnsutils dsniff zip unzip;
-wget https://github.com/jgmdev/ddos-deflate/archive/master.zip;unzip master.zip;
-cd ddos-deflate-master && ./install.sh
-service exim4 stop;sysv-rc-conf exim4 off;
+function InstUpdates(){
+ export DEBIAN_FRONTEND=noninteractive
+ apt-get update
+ apt-get upgrade -y
+ apt-get install nano wget curl zip unzip tar gzip p7zip-full bc rc openssl cron net-tools dnsutils dos2unix screen bzip2 ccrypt -y
+ apt-get install dropbear stunnel4 privoxy ca-certificates nginx ruby apt-transport-https lsb-release squid screenfetch -y
+ apt-get install nginx ruby apt-transport-https lsb-release squid screenfetch -y
+ apt-get install perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python dbus libxml-parser-perl -y
+ apt-get install shared-mime-info jq -y
+ gem install lolcat
+ apt-get autoremove -y
+
  # Removing some duplicated sshd server configs
 rm -f /etc/ssh/sshd_config
 
@@ -739,7 +674,7 @@ mySquid
  # Starting Proxy server
  echo -e "Restarting proxy server.."
  systemctl restart squid
-
+}
 
  function OvpnConfigs(){
 #!/bin/bash
@@ -1022,6 +957,7 @@ $(cat /etc/openvpn/ta.key)
 </tls-auth>
 EOF17
 
+
 DISTRO=`awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }'`
 #SERVER_IP=`ip -o route get to 8.8.8.8 | sed -n 's/.*src \([0-9.]\+\).*/\1/p'`
 SERVER_IP=$(wget -qO- ipv4.icanhazip.com)
@@ -1147,127 +1083,186 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/ohpserver -port 8887 -proxy 127.0.0.1:8088 -tunnel $SERVER_IP:1103
 Restart=always
-RestartSec=3
+ 
+ # Setting template's correct name,IP address and nginx Port
+ sed -i "s|MyScriptName|$MyScriptName|g" /var/www/openvpn/index.html
+ sed -i "s|NGINXPORT|$OvpnDownload_Port|g" /var/www/openvpn/index.html
+ sed -i "s|IP-ADDRESS|$IPADDR|g" /var/www/openvpn/index.html
+
+ # Restarting nginx service
+ systemctl restart nginx
+ 
+ # Creating all .ovpn config archives
+ cd /var/www/openvpn
+ zip -qq -r Configs.zip *.ovpn
+ cd
+}
+
+function ip_address(){
+  local IP="$( ip addr | egrep -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | egrep -v "^192\.168|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[0-2]\.|^10\.|^127\.|^255\.|^0\." | head -n 1 )"
+  [ -z "${IP}" ] && IP="$( wget -qO- -t1 -T2 ipv4.icanhazip.com )"
+  [ -z "${IP}" ] && IP="$( wget -qO- -t1 -T2 ipinfo.io/ip )"
+  [ ! -z "${IP}" ] && echo "${IP}" || echo
+} 
+IPADDR="$(ip_address)"
+
+function ConfStartup(){
+ # Daily reboot time of our machine
+ # For cron commands, visit https://crontab.guru
+ echo -e "0 4\t* * *\troot\treboot" > /etc/cron.d/b_reboot_job
+
+ # Creating directory for startup script
+ rm -rf /etc/barts
+ mkdir -p /etc/barts
+ chmod -R 755 /etc/barts
+ 
+ # Creating startup script using cat eof tricks
+ cat <<'EOFSH' > /etc/barts/startup.sh
+#!/bin/bash
+# Setting server local time
+ln -fs /usr/share/zoneinfo/MyVPS_Time /etc/localtime
+
+# Prevent DOS-like UI when installing using APT (Disabling APT interactive dialog)
+export DEBIAN_FRONTEND=noninteractive
+
+# Allowing ALL TCP ports for our machine (Simple workaround for policy-based VPS)
+iptables -A INPUT -s $(wget -4qO- http://ipinfo.io/ip) -p tcp -m multiport --dport 1:65535 -j ACCEPT
+
+# Allowing OpenVPN to Forward traffic
+/bin/bash /etc/openvpn/openvpn.bash
+
+# Deleting Expired SSH Accounts
+/usr/local/sbin/delete_expired &> /dev/null
+EOFSH
+ chmod +x /etc/barts/startup.sh
+ 
+ # Setting server local time every time this machine reboots
+ sed -i "s|MyVPS_Time|$MyVPS_Time|g" /etc/barts/startup.sh
+
+ # 
+ rm -rf /etc/sysctl.d/99*
+
+ # Setting our startup script to run every machine boots 
+ echo "[Unit]
+Description=Barts Startup Script
+Before=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /etc/barts/startup.sh
+RemainAfterExit=yes
+
 [Install]
-WantedBy=multi-user.target
-EOF
+WantedBy=multi-user.target" > /etc/systemd/system/barts.service
+ chmod +x /etc/systemd/system/barts.service
+ systemctl daemon-reload
+ systemctl start barts
+ systemctl enable barts &> /dev/null
 
-# Enable on boot
-echo 'Start services on boot'
-systemctl enable privoxy
-systemctl start privoxy
-systemctl enable ohpserver001.service
-systemctl enable ohpserver002.service
-systemctl enable ohpserver003.service
-systemctl enable ohpserver004.service
-systemctl start ohpserver001.service
-systemctl start ohpserver002.service
-systemctl start ohpserver003.service
-systemctl start ohpserver004.service
-#############################
+ # Rebooting cron service
+ systemctl restart cron
+ systemctl enable cron
+ 
+}
 
-# download script
-cd
-wget -O /usr/bin/benchmark "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/benchmark.sh"
-wget -O /usr/bin/speedtest  "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/speedtest_cli.py"
-wget -O /usr/bin/ps-mem "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/ps_mem.py"
-wget -O /usr/bin/dropmon "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/dropmon.sh"
-wget -O /usr/bin/menu "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/menu"
-wget -O /usr/bin/user-active-list "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-active-list.sh"
-wget -O /usr/bin/user-add "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-add.sh"
-wget -O /usr/bin/user-add-pptp "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-add-pptp.sh"
-wget -O /usr/bin/user-del "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-del.sh"
-wget -O /usr/bin/disable-user-expire "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/disable-user-expire.sh"
-wget -O /usr/bin/delete-user-expire "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/delete-user-expire.sh"
-wget -O /usr/bin/banned-user "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/banned-user.sh"
-wget -O /usr/bin/unbanned-user "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/unbanned-user.sh"
-wget -O /usr/bin/user-expire-list "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-expire-list.sh"
-wget -O /usr/bin/user-gen "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-gen.sh"
-wget -O /usr/bin/userlimit.sh "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/userlimit.sh"
-wget -O /usr/bin/userlimitssh.sh "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/userlimitssh.sh"
-wget -O /usr/bin/user-list "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-list.sh"
-wget -O /usr/bin/user-login "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-login.sh"
-wget -O /usr/bin/user-pass "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-pass.sh"
-wget -O /usr/bin/user-renew "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/user-renew.sh"
-wget -O /usr/bin/clearcache.sh "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/clearcache.sh"
-wget -O /usr/bin/bannermenu "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/bannermenu"
-cd
+function ConfMenu(){
+echo -e " Creating Menu scripts.."
 
-#rm -rf /etc/cron.weekly/
-#rm -rf /etc/cron.hourly/
-#rm -rf /etc/cron.monthly/
-rm -rf /etc/cron.daily/
-wget -O /root/passwd "https://raw.githubusercontent.com/macisvpn/premiumnow/master/menu/passwd.sh"
-chmod +x /root/passwd
-echo "01 23 * * * root /root/passwd" > /etc/cron.d/passwd
+cd /usr/local/sbin/
+rm -rf {accounts,base-ports,base-ports-wc,base-script,bench-network,clearcache,connections,create,create_random,create_trial,delete_expired,diagnose,edit_dropbear,edit_openssh,edit_openvpn,edit_ports,edit_squid3,edit_stunnel4,locked_list,menu,options,ram,reboot_sys,reboot_sys_auto,restart_services,server,set_multilogin_autokill,set_multilogin_autokill_lib,show_ports,speedtest,user_delete,user_details,user_details_lib,user_extend,user_list,user_lock,user_unlock}
+wget -q 'https://raw.githubusercontent.com/Barts-23/menu1/master/menu.zip'
+unzip -qq menu.zip
+rm -f menu.zip
+chmod +x ./*
+dos2unix ./* &> /dev/null
+sed -i 's|/etc/squid/squid.conf|/etc/privoxy/config|g' ./*
+sed -i 's|http_port|listen-address|g' ./*
+cd ~
 
-echo "*/30 * * * * root service dropbear restart" > /etc/cron.d/dropbear
-echo "00 23 * * * root /usr/bin/disable-user-expire" > /etc/cron.d/disable-user-expire
-echo "0 */12 * * * root /sbin/reboot" > /etc/cron.d/reboot
-#echo "00 01 * * * root echo 3 > /proc/sys/vm/drop_caches && swapoff -a && swapon -a" > /etc/cron.d/clearcacheram3swap
-echo "*/30 * * * * root /usr/bin/clearcache.sh" > /etc/cron.d/clearcache1
+echo 'clear' > /etc/profile.d/barts.sh
+echo 'echo '' > /var/log/syslog' >> /etc/profile.d/barts.sh
+echo 'screenfetch -p -A Android' >> /etc/profile.d/barts.sh
+chmod +x /etc/profile.d/barts.sh
+}
 
-cd
-chmod +x /usr/bin/benchmark
-chmod +x /usr/bin/speedtest
-chmod +x /usr/bin/ps-mem
-#chmod +x /usr/bin/autokill
-chmod +x /usr/bin/dropmon
-chmod +x /usr/bin/menu
-chmod +x /usr/bin/user-active-list
-chmod +x /usr/bin/user-add
-chmod +x /usr/bin/user-add-pptp
-chmod +x /usr/bin/user-del
-chmod +x /usr/bin/disable-user-expire
-chmod +x /usr/bin/delete-user-expire
-chmod +x /usr/bin/banned-user
-chmod +x /usr/bin/unbanned-user
-chmod +x /usr/bin/user-expire-list
-chmod +x /usr/bin/user-gen
-chmod +x /usr/bin/userlimit.sh
-chmod +x /usr/bin/userlimitssh.sh
-chmod +x /usr/bin/user-list
-chmod +x /usr/bin/user-login
-chmod +x /usr/bin/user-pass
-chmod +x /usr/bin/user-renew
-chmod +x /usr/bin/clearcache.sh
-chmod +x /usr/bin/bannermenu
-cd
+function ScriptMessage(){
+ echo -e " メモメモ(｡◕‿◕｡) $MyScriptName Debian/Ubuntu VPS Installer"
+ echo -e " Open release version"
+ echo -e ""
+ echo -e " Script created by Gakod"
+ echo -e " Edited by KinGmapua"
+}
 
-clear
-# restart service
-service ssh restart
-service openvpn restart
-service dropbear restart
-service nginx restart
-service php5-fpm restart
-service webmin restart
-service squid3 restart
-service fail2ban restart
+ # First thing to do is check if this machine is Debian
+# source /etc/os-release
+# if [[ "$ID" != 'debian' ]];[[ "$ID" != 'ubuntu' ]]; then
+# ScriptMessage
+# echo -e "[\e[1;31mError\e[0m] This script is for Debian only, exting..." 
+# exit 1
+# fi
 
-# SELASAI SUDAH BOSS! ( AutoscriptByOrangKuatSabahanTerkini )
-echo "========================================"  | tee -a log-install.txt
-echo "Service Autoscript OrangKuatSabahanTerkini (OrangKuatSabahanTerkini SCRIPT 2017)"  | tee -a log-install.txt
-echo "----------------------------------------"  | tee -a log-install.txt
-echo ""  | tee -a log-install.txt
-echo "nginx : http://$myip:80"   | tee -a log-install.txt
-echo "Webmin : http://$myip:10000/"  | tee -a log-install.txt
-echo "Squid3 : 8080"  | tee -a log-install.txt
-echo "OpenSSH : 22"  | tee -a log-install.txt
-echo "Dropbear : 443"  | tee -a log-install.txt
-echo "OpenVPN  : TCP 1194 (SILA DAPATKAN DENGAN OrangKuatSabahanTerkini)"  | tee -a log-install.txt
-echo "Fail2Ban : [on]"  | tee -a log-install.txt
-echo "Timezone : Asia/Kuala_Lumpur"  | tee -a log-install.txt
-echo "Menu : type menu to check menu script"  | tee -a log-install.txt
-echo ""  | tee -a log-install.txt
-echo "----------------------------------------"
-echo "LOG INSTALL  --> /root/log-install.txt"
-echo "----------------------------------------"
-echo "========================================"  | tee -a log-install.txt
-echo "      PLEASE REBOOT TO TAKE EFFECT !"
-echo "========================================"  | tee -a log-install.txt
-cat /dev/null > ~/.bash_history && history -c
-rm *.txt
-rm *.sh
-exit
+ if [[ $EUID -ne 0 ]];then
+ ScriptMessage
+ echo -e "[\e[1;31mError\e[0m] This script must be run as root, exiting..."
+ exit 1
 fi
+
+ # (For OpenVPN) Checking it this machine have TUN Module, this is the tunneling interface of OpenVPN server
+ if [[ ! -e /dev/net/tun ]]; then
+ echo -e "[\e[1;31m×\e[0m] You cant use this script without TUN Module installed/embedded in your machine, file a support ticket to your machine admin about this matter"
+ echo -e "[\e[1;31m-\e[0m] Script is now exiting..."
+ exit 1
+fi
+
+ # Begin Installation by Updating and Upgrading machine and then Installing all our wanted packages/services to be install.
+ScriptMessage
+ sleep 2
+ InstUpdates
+ echo -e "Configuring ssh..."
+ InstSSH
+ echo -e "Configuring stunnel..."
+ InsStunnel
+ echo -e "Configuring proxy..."
+ InsProxy
+ echo -e "Configuring OpenVPN..."
+ InsOpenVPN
+ OvpnConfigs
+ ConfStartup
+ ConfMenu
+ ln -fs /usr/share/zoneinfo/$MyVPS_Time /etc/localtime
+ clear
+ cd ~ 
+ bash /etc/profile.d/barts.sh
+ ScriptMessage
+ 
+ # Showing additional information from installating this script
+ echo -e ""
+ echo -e " Success Installation"
+ echo -e ""
+ echo -e " Service Ports: "
+ echo -e " OpenSSH: $SSH_Port1, $SSH_Port2"
+ echo -e " Stunnel: $Stunnel_Port1, $Stunnel_Port2"
+ echo -e " DropbearSSH: $Dropbear_Port1, $Dropbear_Port2"
+ echo -e " Privoxy: $Privoxy_Port1, $Privoxy_Port2"
+ echo -e " Squid: $Proxy_Port"
+ echo -e " OpenVPN: $OpenVPN_Port1, $OpenVPN_Port2"
+ echo -e " NGiNX: $OvpnDownload_Port"
+ echo -e " Webmin: 10000"
+ #echo -e " L2tp IPSec Key: xjvpn13"
+ echo -e ""
+ echo -e ""
+ echo -e " OpenVPN Configs Download site"
+ echo -e " http://$IPADDR:$OvpnDownload_Port"
+ echo -e ""
+ echo -e " All OpenVPN Configs Archive"
+ echo -e " http://$IPADDR:$OvpnDownload_Port/Configs.zip"
+ echo -e ""
+ echo -e ""
+ echo -e " [Note] DO NOT RESELL THIS SCRIPT"
+
+ # Clearing all logs from installation
+ rm -rf /root/.bash_history && history -c && echo '' > /var/log/syslog
+
+rm -f spp*
+exit 1

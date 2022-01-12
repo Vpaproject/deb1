@@ -610,33 +610,9 @@ EOF122
  wget -qO /etc/openvpn/b.zip 'https://raw.githubusercontent.com/Bonveio/BonvScripts/master/openvpn_plugin64'
  unzip -qq /etc/openvpn/b.zip -d /etc/openvpn
  rm -f /etc/openvpn/b.zip
- 
- # Some workaround for OpenVZ machines for "Startup error" openvpn service
- if [[ "$(hostnamectl | grep -i Virtualization | awk '{print $2}' | head -n1)" == 'openvz' ]]; then
- sed -i 's|LimitNPROC|#LimitNPROC|g' /lib/systemd/system/openvpn*
- systemctl daemon-reload
-fi
 
  # Allow IPv4 Forwarding
  echo 'net.ipv4.ip_forward=1' > /etc/sysctl.d/20-openvpn.conf && sysctl --system &> /dev/null && echo 1 > /proc/sys/net/ipv4/ip_forward
-
- # Installing Firewalld
- apt install firewalld -y
- systemctl start firewalld
- systemctl enable firewalld
- firewall-cmd --quiet --set-default-zone=public
- firewall-cmd --quiet --zone=public --permanent --add-port=1-65534/tcp
- firewall-cmd --quiet --zone=public --permanent --add-port=1-65534/udp
- firewall-cmd --quiet --reload
- firewall-cmd --quiet --add-masquerade
- firewall-cmd --quiet --permanent --add-masquerade
- firewall-cmd --quiet --permanent --add-service=ssh
- firewall-cmd --quiet --permanent --add-service=openvpn
- firewall-cmd --quiet --permanent --add-service=http
- firewall-cmd --quiet --permanent --add-service=https
- firewall-cmd --quiet --permanent --add-service=privoxy
- firewall-cmd --quiet --permanent --add-service=squid
- firewall-cmd --quiet --reload
  
  # Enabling IPv4 Forwarding
  echo 1 > /proc/sys/net/ipv4/ip_forward
@@ -1008,100 +984,7 @@ screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7700 --max-clients 1000
 screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7800 --max-clients 1000 --max-connections-for-client 1000 > /dev/null &
 screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7900 --max-clients 1000 --max-connections-for-client 1000 > /dev/null &
 
-DEBIAN_FRONTEND=noninteractive apt install -y resolvconf privoxy stunnel unzip iproute2 dns2tcp
-echo 'Dependencies Installed!' 
 
-# Install TunnelCat VPN Software
-echo 'Installing ohpserver'
-wget https://github.com/lfasmpao/open-http-puncher/releases/download/0.1/ohpserver-linux32.zip
-unzip ohpserver-linux32.zip
-rm ohpserver-linux32.zip
-mv ohpserver /usr/local/bin/
-chmod +x /usr/local/bin/ohpserver
-
-# Setup Privoxy
-echo 'Setting up Privoxy'
-mkdir /etc/privoxy/
-cat <<EOF > /etc/privoxy/config
-user-manual /usr/share/doc/privoxy/user-manual
-confdir /etc/privoxy
-logdir /var/log/privoxy
-actionsfile match-all.action
-actionsfile default.action
-actionsfile user.action
-filterfile default.filter
-filterfile user.filter
-logfile logfile
-listen-address  :8081
-toggle 1
-enable-remote-toggle  0
-enable-remote-http-toggle  0
-enable-edit-actions 0
-enforce-blocks 0
-buffer-limit 4096
-enable-proxy-authentication-forwarding 0
-forwarded-connect-retries  0
-accept-intercepted-requests 0
-allow-cgi-request-crunching 0
-split-large-forms 0
-keep-alive-timeout 5
-tolerate-pipelining 1
-socket-timeout 300
-EOF
-
-cat <<EOF1 > /etc/privoxy/user.action
-{ +block }
-/
-{ -block }
-*.tcat.me
-127.0.0.1
-$SERVER_IP
-EOF1
-
-# Setup ohpserver
-echo 'Setup ohpserver'
-cat <<EOF > /etc/systemd/system/ohpserver.service
-[Unit]
-Description=Daemonize OpenHTTP Puncher Server
-Wants=network.target
-After=network.target
-[Service]
-ExecStart=/usr/local/bin/ohpserver -port 8087 -proxy 127.0.0.1:8081 -tunnel $SERVER_IP:1103
-Restart=always
-RestartSec=3
-[Install]
-WantedBy=multi-user.target
-EOF
-
-echo 'Setup dns2tcp'
-cat <<EOF > /etc/dns2tcpd.conf
-listen = 0.0.0.0
-port = 53
-user = nobody
-chroot = /tmp
-pid_file = /var/run/dns2tcp.pid
-domain = $DNS_TUNNEL_DOMAIN
-resources = ovpn:$SERVER_IP:1103
-EOF
-
-# Start Services
-echo 'Running Services'
-echo "nameserver 8.8.8.8" > /etc/resolvconf/resolv.conf.d/head
-systemctl daemon-reload
-systemctl restart resolvconf
-systemctl restart stunnel4
-systemctl restart privoxy
-systemctl start ohpserver
-systemctl stop systemd-resolved
-systemctl start dns2tcp
-
-# Enable on boot
-echo 'Start services on boot'
-systemctl enable stunnel4
-systemctl enable privoxy
-systemctl enable dns2tcp
-systemctl enable ohpserver
- 
  # Setting template's correct name,IP address and nginx Port
  sed -i "s|MyScriptName|$MyScriptName|g" /var/www/openvpn/index.html
  sed -i "s|NGINXPORT|$OvpnDownload_Port|g" /var/www/openvpn/index.html

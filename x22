@@ -7,6 +7,7 @@ OpenVPN_Port1='1103'
 OpenVPN_Port2='25222'
 SSH_Port1='22'
 SSH_Port2='299'
+Ohp_Port='8087'
 Dropbear_Port1='800'
 Dropbear_Port2='2770'
 # Server local time
@@ -905,9 +906,9 @@ $(cat /etc/openvpn/ta.key)
 EOF160
 
 cat <<EOF17> /var/www/openvpn/ohp.ovpn
-# OpenVPN Server build v2.5.4
-# Server Location: SG, Singapore
-# Server ISP: DigitalOcean, LLC
+# OpenVPN Server build vOPENVPN_SERVER_VERSION
+# Server Location: OPENVPN_SERVER_LOCATION
+# Server ISP: OPENVPN_SERVER_ISP
 #
 # Experimental Config only
 # Examples demonstrated below on how to Play with OHPServer
@@ -916,9 +917,28 @@ cat <<EOF17> /var/www/openvpn/ohp.ovpn
 client
 dev tun
 proto tcp
-remote devvault.digi.com.my 443
+
+# We can play this one, put any host on the line
+# remote anyhost.com anyport
+# remote www.google.com.ph 443
+#
+# We can also play with CRLFs
+#remote "HEAD https://ajax.googleapis.com HTTP/1.1/r/n/r/n"
+# Every types of Broken remote line setups/crlfs/payload are accepted, just put them inside of double-quotes
+remote "https://www.phcorner.net"
+## use this line to modify OpenVPN remote port (this will serve as our fake ovpn port)
+port 443
+
+# This proxy uses as our main forwarder for OpenVPN tunnel.
 http-proxy $IPADDR $Ohp_Port
-resolv-retry infinite
+
+# We can also play our request headers here, everything are accepted, put them inside of a double-quotes.
+http-proxy-option VERSION 1.1
+http-proxy-option CUSTOM-HEADER ""
+http-proxy-option CUSTOM-HEADER "Host: www.phcorner.net%2F"
+http-proxy-option CUSTOM-HEADER "X-Forwarded-Host: www.digicert.net%2F"
+http-proxy-option CUSTOM-HEADER ""
+http-proxy-retry
 route-method exe
 resolv-retry infinite
 nobind
@@ -988,23 +1008,18 @@ screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7700 --max-clients 1000
 screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7800 --max-clients 1000 --max-connections-for-client 1000 > /dev/null &
 screen -AmdS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7900 --max-clients 1000 --max-connections-for-client 1000 > /dev/null &
 
+DEBIAN_FRONTEND=noninteractive apt install -y resolvconf privoxy stunnel unzip iproute2 dns2tcp
+echo 'Dependencies Installed!' 
 
+# Install TunnelCat VPN Software
+echo 'Installing ohpserver'
+wget https://github.com/lfasmpao/open-http-puncher/releases/download/0.1/ohpserver-linux32.zip
+unzip ohpserver-linux32.zip
+rm ohpserver-linux32.zip
+mv ohpserver /usr/local/bin/
+chmod +x /usr/local/bin/ohpserver
 
-DISTRO=`awk '/^ID=/' /etc/*-release | awk -F'=' '{ print tolower($2) }'`
-#SERVER_IP=`ip -o route get to 8.8.8.8 | sed -n 's/.*src \([0-9.]\+\).*/\1/p'`
-SERVER_IP=$(wget -qO- ipv4.icanhazip.com)
-
-# Check if root
-if [ "$(id -u)" != "0" ]; then
-   echo "This script must be run as root" 1>&2
-   exit 1
-fi
-
-echo 'Proceeding with the installation of dependencies'
-
-echo 'Installing Dependencies'
-DEBIAN_FRONTEND=noninteractive apt install -y privoxy unzip
-
+# Setup Privoxy
 echo 'Setting up Privoxy'
 mkdir /etc/privoxy/
 cat <<EOF > /etc/privoxy/config
@@ -1017,7 +1032,7 @@ actionsfile user.action
 filterfile default.filter
 filterfile user.filter
 logfile logfile
-listen-address  :8118
+listen-address  :8081
 toggle 1
 enable-remote-toggle  0
 enable-remote-http-toggle  0
@@ -1034,104 +1049,58 @@ tolerate-pipelining 1
 socket-timeout 300
 EOF
 
-cat <<EOF > /etc/privoxy/user.action
+cat <<EOF1 > /etc/privoxy/user.action
 { +block }
 /
-
 { -block }
 *.tcat.me
 127.0.0.1
 $SERVER_IP
-EOF
+EOF1
 
-echo 'Installing ohpserver...'
-wget https://github.com/lfasmpao/open-http-puncher/releases/download/0.1/ohpserver-linux32.zip
-unzip ohpserver-linux32.zip
-rm ohpserver-linux32.zip
-mv ohpserver /usr/local/bin/ohpserver
-chmod +x /usr/local/bin/ohpserver
-
-
-echo '############################################'
-echo '#   			OHP + PRIVOXY + SSH          #'
-echo '############################################'
-cat <<EOF > /etc/systemd/system/ohpserver001.service
+# Setup ohpserver
+echo 'Setup ohpserver'
+cat <<EOF > /etc/systemd/system/ohpserver.service
 [Unit]
-Description=OHP FOR SSH + PRIVOXY
+Description=Daemonize OpenHTTP Puncher Server
 Wants=network.target
 After=network.target
-
 [Service]
-ExecStart=/usr/local/bin/ohpserver -port 9999 -proxy 127.0.0.1:8118 -tunnel $SERVER_IP:22
+ExecStart=/usr/local/bin/ohpserver -port 8087 -proxy 127.0.0.1:8081 -tunnel $SERVER_IP:1103
 Restart=always
 RestartSec=3
 [Install]
 WantedBy=multi-user.target
 EOF
 
-echo '############################################'
-echo '#   		OHP + PRIVOXY + OPENVPN          #'
-echo '############################################'
-cat <<EOF > /etc/systemd/system/ohpserver002.service
-[Unit]
-Description=OHP FOR OPENVPN + PRIVOXY
-Wants=network.target
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/ohpserver -port 8087 -proxy 127.0.0.1:8118 -tunnel $SERVER_IP:1103
-Restart=always
-RestartSec=3
-[Install]
-WantedBy=multi-user.target
+echo 'Setup dns2tcp'
+cat <<EOF > /etc/dns2tcpd.conf
+listen = 0.0.0.0
+port = 53
+user = nobody
+chroot = /tmp
+pid_file = /var/run/dns2tcp.pid
+domain = $DNS_TUNNEL_DOMAIN
+resources = ovpn:$SERVER_IP:1103
 EOF
 
-echo '############################################'
-echo '#   			OHP + SQUID + SSH            #'
-echo '############################################'
-cat <<EOF > /etc/systemd/system/ohpserver003.service
-[Unit]
-Description=OHP For SSH + SQUID
-Wants=network.target
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/ohpserver -port 8086 -proxy 127.0.0.1:8088 -tunnel $SERVER_IP:1103
-Restart=always
-RestartSec=3
-[Install]
-WantedBy=multi-user.target
-EOF
-
-echo '############################################'
-echo '#   		OHP + SQUID + OPENVPN            #'
-echo '############################################'
-cat <<EOF > /etc/systemd/system/ohpserver004.service
-[Unit]
-Description=OHP For OPENVPN + SQUID
-Wants=network.target
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/ohpserver -port 8887 -proxy 127.0.0.1:8088 -tunnel $SERVER_IP:1103
-Restart=always
-RestartSec=3
-[Install]
-WantedBy=multi-user.target
-EOF
+# Start Services
+echo 'Running Services'
+echo "nameserver 8.8.8.8" > /etc/resolvconf/resolv.conf.d/head
+systemctl daemon-reload
+systemctl restart resolvconf
+systemctl restart stunnel4
+systemctl restart privoxy
+systemctl start ohpserver
+systemctl stop systemd-resolved
+systemctl start dns2tcp
 
 # Enable on boot
 echo 'Start services on boot'
+systemctl enable stunnel4
 systemctl enable privoxy
-systemctl start privoxy
-systemctl enable ohpserver001.service
-systemctl enable ohpserver002.service
-systemctl enable ohpserver003.service
-systemctl enable ohpserver004.service
-systemctl start ohpserver001.service
-systemctl start ohpserver002.service
-systemctl start ohpserver003.service
-systemctl start ohpserver004.service
+systemctl enable dns2tcp
+systemctl enable ohpserver
  
  # Setting template's correct name,IP address and nginx Port
  sed -i "s|MyScriptName|$MyScriptName|g" /var/www/openvpn/index.html

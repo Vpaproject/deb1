@@ -4,8 +4,10 @@ function ip_address(){
   [ -z "${IP}" ] && IP="$( wget -qO- -t1 -T2 ipv4.icanhazip.com )"
   [ -z "${IP}" ] && IP="$( wget -qO- -t1 -T2 ipinfo.io/ip )"
   [ ! -z "${IP}" ] && echo "${IP}" || echo
-} 
+}
+ip_address
 IPADDR="$(ip_address)"
+apt-get update && apt-get update
 # MULA SETUP
 myip=`ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0' | head -n1`;
 myint=`ifconfig | grep -B1 "inet addr:$myip" | head -n1 | awk '{print $1}'`;
@@ -737,7 +739,7 @@ mySquid
  # Starting Proxy server
  echo -e "Restarting proxy server.."
  systemctl restart squid
-}
+
 
  function OvpnConfigs(){
 #!/bin/bash

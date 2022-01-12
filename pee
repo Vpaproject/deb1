@@ -6,14 +6,17 @@ SSH_Banner='https://raw.githubusercontent.com/itsgelogomayee/dpndncy/master/bann
 OpenVPN_Port1='1103'
 OpenVPN_Port2='25222'
 SSH_Port1='22'
-SSH_Port2='299'
+SSH_Port2='225'
+Ohp_Port='8087'
+# SSH_Banner='https://pastebin.com/raw/CnKVT3de'
 Dropbear_Port1='800'
-Dropbear_Port2='441'
+Dropbear_Port2='442'
 # Server local time
 MyVPS_Time='Asia/Kuala_Lumpur'
 #############################
 
 function InstUpdates(){
+#  export DEBIAN_FRONTEND=noninteractive
  apt-get update
  apt-get upgrade -y
  apt-get install nano wget curl zip unzip tar gzip p7zip-full bc rc openssl cron net-tools dnsutils dos2unix screen bzip2 ccrypt -y
@@ -24,15 +27,13 @@ function InstUpdates(){
  gem install lolcat
  apt-get autoremove -y
 
+ function InstSSH(){
  # Removing some duplicated sshd server configs
-rm -f /etc/ssh/sshd_config
-
-sleep 1
-
-# Creating a SSH server config using cat eof tricks
-cat <<'MySSHConfig' > /etc/ssh/sshd_config
-# Project FOG OpenSSH Server config
-# -blackestsaint
+ rm -f /etc/ssh/sshd_config*
+ 
+ # Creating a SSH server config using cat eof tricks
+ cat <<'MySSHConfig' > /etc/ssh/sshd_config
+# My OpenSSH Server config
 Port myPORT1
 Port myPORT2
 AddressFamily inet
@@ -49,21 +50,23 @@ ChallengeResponseAuthentication no
 UsePAM yes
 X11Forwarding yes
 PrintMotd no
-ClientAliveInterval 300
+ClientAliveInterval 240
 ClientAliveCountMax 2
 UseDNS no
-Banner /etc/zorro-luffy
+Banner /etc/banner
 AcceptEnv LANG LC_*
 Subsystem   sftp  /usr/lib/openssh/sftp-server
-
 MySSHConfig
 
-sleep 2
  # Now we'll put our ssh ports inside of sshd_config
  sed -i "s|myPORT1|$SSH_Port1|g" /etc/ssh/sshd_config
  sed -i "s|myPORT2|$SSH_Port2|g" /etc/ssh/sshd_config
 
- 
+ # Download our SSH Banner
+ rm -f /etc/banner
+ wget -qO /etc/banner "$SSH_Banner"
+ dos2unix -q /etc/banner
+
  # My workaround code to remove `BAD Password error` from passwd command, it will fix password-related error on their ssh accounts.
  sed -i '/password\s*requisite\s*pam_cracklib.s.*/d' /etc/pam.d/common-password
  sed -i 's/use_authtok //g' /etc/pam.d/common-password
@@ -73,16 +76,9 @@ sleep 2
  sed -i '/\/usr\/sbin\/nologin/d' /etc/shells
  echo '/bin/false' >> /etc/shells
  echo '/usr/sbin/nologin' >> /etc/shells
-
-# Restarting openssh service
- systemctl restart ssh
-  
- rm -f /etc/banner
- wget -qO /etc/banner "$SSH_Banner"
- dos2unix -q /etc/banner
-
-sed -i '/password\s*requisite\s*pam_cracklib.s.*/d' /etc/pam.d/common-password && sed -i 's|use_authtok ||g' /etc/pam.d/common-password
  
+ # Restarting openssh service
+ systemctl restart ssh
  
  # Removing some duplicate config file
  rm -rf /etc/default/dropbear*
@@ -107,14 +103,14 @@ MyDropbear
  # Restarting dropbear service
  systemctl restart dropbear
 }
+
 function InsStunnel(){
  wget https://raw.githubusercontent.com/Vpaproject/KinGmapua/master/s4 && bash s4
 
  # Restarting stunnel service
  systemctl restart $StunnelDir
-
 }
-
+ 
  # Installing OpenVPN by pulling its repository inside sources.list file 
  #rm -rf /etc/apt/sources.list.d/openvpn*
  echo "deb http://build.openvpn.net/debian/openvpn/stable $(lsb_release -sc) main" >/etc/apt/sources.list.d/openvpn.list && apt-key del E158C569 && wget -O - https://swupdate.openvpn.net/repos/repo-public.gpg | apt-key add -
